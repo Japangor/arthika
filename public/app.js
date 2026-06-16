@@ -130,28 +130,89 @@ function bindGo(root) {
 async function viewHome() {
   app.innerHTML = `
     <section class="hero">
-      <h1>Stock Screener &amp; <em>AI Markets</em></h1>
-      <p class="sub">Live NSE prices · smart screeners · AI insights · IPO &amp; results calendar</p>
+      <h1>Markets <em>Today</em></h1>
+      <p class="sub">Live NSE indices, movers &amp; intraday breadth</p>
     </section>
-    <div id="commodities"></div>
-    <div class="two-col" style="margin-top:1rem">
-      <div class="panel"><h2>Top Gainers <a class="more" data-go="/top-gainers">View all →</a></h2><div id="gainers">${spinner()}</div></div>
-      <div class="panel"><h2>Top Losers <a class="more" data-go="/top-losers">View all →</a></h2><div id="losers">${spinner()}</div></div>
+    <div id="indices" class="index-strip">${spinner()}</div>
+    <div class="two-col" style="margin-top:0.5rem">
+      <div class="panel"><h2>Top Gainers <a class="more" data-go="/top-gainers">All →</a></h2><div id="gainers" class="mover-list">${spinner()}</div></div>
+      <div class="panel"><h2>Top Losers <a class="more" data-go="/top-losers">All →</a></h2><div id="losers" class="mover-list">${spinner()}</div></div>
     </div>
     ${adSlot('home-mid')}
-    <div class="panel" style="margin-top:1rem"><h2>AI Recommendations <span class="tag gold">Pro = full list</span></h2><div id="recommend">${spinner()}</div></div>
     <div class="section-title">Explore</div>
     <div id="home-disc" class="disc-grid"></div>
+    <div id="commodities"></div>
   `;
   bindGo(app);
   loadTicker();
-
-  loadList('/api/market/movers?type=gainers', 'gainers', 10);
-  loadList('/api/market/movers?type=losers', 'losers', 10);
-  loadRecommend();
+  loadIndices();
+  loadMovers('/api/market/movers?type=gainers', 'gainers', 8);
+  loadMovers('/api/market/movers?type=losers', 'losers', 8);
   loadCommodities();
   $('#home-disc').innerHTML = DISCOVER.slice(0, 4).map(discCard).join('');
   bindGo($('#home-disc'));
+}
+
+function rangeBar(low, cur, high) {
+  const l = num(low), c = num(cur), h = num(high);
+  if ([l, c, h].some(Number.isNaN) || h <= l) return '';
+  const pos = Math.max(0, Math.min(100, ((c - l) / (h - l)) * 100));
+  return `<div class="range-bar"><span class="range-fill" style="width:${pos}%"></span><span class="range-dot" style="left:${pos}%"></span></div>`;
+}
+
+function breadthBar(adv, dec) {
+  const a = num(adv), d = num(dec);
+  if (Number.isNaN(a) || Number.isNaN(d) || (a + d) === 0) return '';
+  const ap = (a / (a + d)) * 100;
+  return `<div class="breadth"><div class="breadth-track"><span class="breadth-adv" style="width:${ap}%"></span></div>
+    <div class="breadth-lbl"><span class="up">▲ ${a}</span><span class="down">${d} ▼</span></div></div>`;
+}
+
+async function loadIndices() {
+  const el = $('#indices');
+  try {
+    const { data } = await api('/api/market/indices');
+    const list = data || [];
+    if (!list.length) { el.innerHTML = ''; return; }
+    el.innerHTML = list.slice(0, 6).map((i) => {
+      const ltp = i.last_trade_price ?? i.close;
+      return `<div class="idx-card">
+        <div class="idx-name">${esc(i.symbol_name || 'Index')}</div>
+        <div class="idx-price">${fmt(ltp)}</div>
+        <div class="idx-chg">${pctHTML(i.change_percent)} <span class="muted">${num(i.change) >= 0 ? '+' : ''}${fmt(i.change)}</span></div>
+        ${rangeBar(i.low, ltp, i.high)}
+        ${breadthBar(i.advance, i.decline)}
+      </div>`;
+    }).join('');
+  } catch { el.innerHTML = ''; }
+}
+
+function moverRow(s, maxAbs) {
+  const chg = num(s.change_percent) || 0;
+  const cls = chg >= 0 ? 'up' : 'down';
+  const w = maxAbs ? Math.max(6, Math.min(100, (Math.abs(chg) / maxAbs) * 100)) : 0;
+  return `<div class="mover" data-go="/stocks/${esc((s.symbol || '').toLowerCase())}">
+    <div class="mover-top">
+      <span class="mover-sym">${esc(s.symbol)}</span>
+      <span class="mover-px">${money(s.ltp ?? s.close)}</span>
+    </div>
+    <div class="mover-bar-row">
+      <div class="mover-bar"><span class="mover-fill ${cls}" style="width:${w}%"></span></div>
+      <span class="${cls} mover-pct">${chg >= 0 ? '+' : ''}${fmt(chg)}%</span>
+    </div>
+  </div>`;
+}
+
+async function loadMovers(path, id, cap) {
+  const el = $('#' + id);
+  try {
+    const { data } = await api(path);
+    const list = (data || []).slice(0, cap);
+    if (!list.length) { el.innerHTML = '<p class="empty">No data right now.</p>'; return; }
+    const maxAbs = Math.max(...list.map((s) => Math.abs(num(s.change_percent) || 0)), 1);
+    el.innerHTML = list.map((s) => moverRow(s, maxAbs)).join('');
+    bindGo(el);
+  } catch { el.innerHTML = '<p class="empty">Unavailable.</p>'; }
 }
 
 async function loadList(path, id, cap) {
@@ -178,9 +239,9 @@ async function loadCommodities() {
     const { data } = await api('/api/market/commodities');
     const list = (data?.commodities || []).concat(data?.currencies || []);
     if (!list.length) { el.innerHTML = ''; return; }
-    el.innerHTML = '<div class="section-title">Commodities &amp; Currencies</div><div class="card-grid">' +
-      list.map((c) => `<div class="index-card"><div class="name">${esc(c.symbol_name)}</div>
-        <div class="price">${fmt(c.last_trade_price ?? c.close)}</div>${pctHTML(c.change_percent)}</div>`).join('') +
+    el.innerHTML = '<div class="section-title">Commodities &amp; Currencies</div><div class="chip-strip">' +
+      list.map((c) => `<div class="quote-chip"><span class="qc-name">${esc(c.symbol_name)}</span>
+        <span class="qc-px">${fmt(c.last_trade_price ?? c.close)}</span>${pctHTML(c.change_percent)}</div>`).join('') +
       '</div>';
   } catch { el.innerHTML = ''; }
 }

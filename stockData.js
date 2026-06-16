@@ -109,16 +109,34 @@ async function getIndices() {
   return Array.isArray(list) ? list : [];
 }
 
-/** Real NSE top gainers + losers (single feed, split by sign). */
+/** Real NSE top gainers + losers.
+ * The dedicated `top-gainer-loser` feed only returns a handful of gainers, so we
+ * derive both sides from the full stock universe and only fall back to the feed
+ * when the universe is unavailable. */
 async function getTopGainerLoser() {
-  const raw = await webGet('/api/symbol/top-gainer-loser', { ttl: 30000 });
-  const list = (unwrapWeb(raw, []) || []).map((r) => normStock(r));
-  const gainers = list
+  let list = [];
+  try {
+    list = await getStockUniverse();
+  } catch (_) {
+    /* ignore — fall back to dedicated feed below */
+  }
+
+  if (!list.length) {
+    const raw = await webGet('/api/symbol/top-gainer-loser', { ttl: 30000 });
+    list = (unwrapWeb(raw, []) || []).map((r) => normStock(r));
+  }
+
+  const movable = list.filter((x) => Number.isFinite(x.change_percent) && x.volume > 0);
+  const pool = movable.length ? movable : list.filter((x) => Number.isFinite(x.change_percent));
+
+  const gainers = pool
     .filter((x) => x.change_percent > 0)
-    .sort((a, b) => b.change_percent - a.change_percent);
-  const losers = list
+    .sort((a, b) => b.change_percent - a.change_percent)
+    .slice(0, 30);
+  const losers = pool
     .filter((x) => x.change_percent < 0)
-    .sort((a, b) => a.change_percent - b.change_percent);
+    .sort((a, b) => a.change_percent - b.change_percent)
+    .slice(0, 30);
   return { gainers, losers, all: list };
 }
 
