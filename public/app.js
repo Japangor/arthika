@@ -651,5 +651,33 @@ document.addEventListener('click', (e) => {
   if (!e.target.closest('.search-wrap')) searchResults.classList.add('hidden');
 });
 
+/* ------------------------------------------------------------------ */
+/* In-page install banner (app marketing)                            */
+/* ------------------------------------------------------------------ */
+const PLAY_URL = 'https://play.google.com/store/apps/details?id=com.gjam.arthika';
+function mountInstallBanner() {
+  try {
+    const snoozed = Number(localStorage.getItem('arthika.install.snooze') || 0);
+    if (snoozed && Date.now() < snoozed) return;
+  } catch {}
+  if (document.querySelector('.install-banner')) return;
+  const bar = document.createElement('div');
+  bar.className = 'install-banner';
+  bar.innerHTML =
+    `<div class="ib-icon">📈</div>` +
+    `<div class="ib-text"><strong>Get the Arthika app</strong>` +
+    `<span>Live NSE screener, alerts &amp; AI insights — free on Android</span></div>` +
+    `<a class="ib-cta" href="${PLAY_URL}" target="_blank" rel="noopener">Install</a>` +
+    `<button class="ib-close" aria-label="Dismiss">&times;</button>`;
+  document.body.appendChild(bar);
+  bar.querySelector('.ib-close').addEventListener('click', () => {
+    bar.remove();
+    try {
+      localStorage.setItem('arthika.install.snooze', String(Date.now() + 7 * 864e5));
+    } catch {}
+  });
+}
+
 /* boot */
 render();
+mountInstallBanner();
