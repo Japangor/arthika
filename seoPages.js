@@ -121,6 +121,10 @@ function faqHtml(faqs) {
     `<h3>${esc(f.q)}</h3><p>${esc(f.a)}</p>`).join('');
 }
 function relatedNav() {
+  const themes = THEMES.slice(0, 8)
+    .map((t) => `<li><a href="/${t.slug}">${esc(t.linkText)}</a></li>`).join('');
+  const sectors = SECTORS.slice(0, 8)
+    .map((s) => `<li><a href="/stocks/sector/${s.slug}">${esc(s.linkText)}</a></li>`).join('');
   return `<nav aria-label="Explore"><h2>Explore Arthika</h2><ul>
     <li><a href="/stock-screener">Live Stock Screener</a></li>
     <li><a href="/intraday-trades">Intraday Trades Today</a></li>
@@ -130,6 +134,10 @@ function relatedNav() {
     <li><a href="/results-calendar">Results Calendar</a></li>
     <li><a href="/fno-ban-list">F&amp;O Ban List</a></li>
     <li><a href="/stocks">NSE Stock List</a></li>
+  </ul>
+  <h2>Popular stock screens</h2><ul>${themes}</ul>
+  <h2>Stocks by sector</h2><ul>${sectors}
+    <li><a href="/sectors">All sectors &amp; indices →</a></li>
   </ul></nav>`;
 }
 
@@ -334,6 +342,185 @@ const HUBS = [
   },
 ];
 
+/* =================================================================== *
+ *  PROGRAMMATIC SEO — auto-generated, data-driven landing pages.
+ *  Every page below renders live data + distinct copy + FAQ + JSON-LD,
+ *  and is auto-added to the sitemap. Adding an entry = a new ranked page.
+ * =================================================================== */
+
+let _uni = { t: 0, v: [] };
+async function universe() {
+  if (Date.now() - _uni.t < 120000 && _uni.v.length) return _uni.v;
+  try {
+    const v = await stock.getStockUniverse();
+    if (v && v.length) _uni = { t: Date.now(), v };
+  } catch (_) { /* keep stale */ }
+  return _uni.v;
+}
+function bySymbols(list, symbols) {
+  const map = new Map(list.map((x) => [x.symbol, x]));
+  return symbols.map((s) => map.get(String(s).toUpperCase())).filter(Boolean);
+}
+
+/* ---- Theme screens (filter the live universe) ---- */
+const THEMES = [
+  {
+    slug: 'high-dividend-stocks',
+    aliases: ['best-dividend-stocks', 'dividend-stocks'],
+    linkText: 'High Dividend Stocks',
+    title: 'High Dividend Stocks in India 2026 — Best NSE Dividend Yield Stocks | Arthika',
+    desc: 'Best high dividend yield stocks on NSE India, ranked live by dividend yield with price, P/E and market cap. Find the top dividend-paying Indian stocks today.',
+    h1: 'High Dividend Yield Stocks — NSE India',
+    intro: 'The highest dividend-yielding stocks on the NSE, ranked live by dividend yield. Dividend stocks can deliver steady passive income; always check payout consistency, earnings cover and balance-sheet strength before investing.',
+    faq: [
+      { q: 'Which Indian stocks have the highest dividend yield?', a: 'Arthika ranks NSE-listed stocks live by dividend yield. The list above shows the current top dividend-yield stocks with their price, P/E and market cap.' },
+      { q: 'Are high dividend stocks a good investment?', a: 'High dividend stocks can provide regular income, but a very high yield can signal a falling price or unsustainable payout. Review earnings, payout ratio and debt before buying.' },
+    ],
+    pick: (l) => l.filter((x) => x.dividend_yield > 0).sort((a, b) => b.dividend_yield - a.dividend_yield),
+  },
+  {
+    slug: 'value-stocks',
+    aliases: ['low-pe-stocks', 'undervalued-stocks'],
+    linkText: 'Value (Low P/E) Stocks',
+    title: 'Undervalued Low P/E Stocks NSE India 2026 — Value Stock Screener | Arthika',
+    desc: 'Undervalued NSE stocks trading at a low price-to-earnings ratio, ranked live. Find value stocks in India with low P/E, plus market cap and dividend yield.',
+    h1: 'Undervalued Low P/E Value Stocks — NSE',
+    intro: 'NSE stocks trading at a low price-to-earnings (P/E) ratio, ranked live from cheapest. A low P/E can indicate a value opportunity — but confirm growth, debt and sector context, as some low-P/E stocks are cheap for a reason.',
+    faq: [
+      { q: 'What are low P/E value stocks?', a: 'Value stocks trade at a low price relative to earnings (P/E ratio). Investors look for fundamentally sound companies whose price has lagged, expecting the gap to close over time.' },
+      { q: 'How do I find undervalued stocks in India?', a: 'Use Arthika’s value screen above, which ranks NSE stocks by low P/E in real time, then check fundamentals before investing.' },
+    ],
+    pick: (l) => l.filter((x) => x.pe > 0 && x.pe < 20).sort((a, b) => a.pe - b.pe),
+  },
+  {
+    slug: 'large-cap-stocks',
+    aliases: ['largecap-stocks'],
+    linkText: 'Large Cap Stocks',
+    title: 'Large Cap Stocks List NSE India 2026 — Top Large Cap Shares | Arthika',
+    desc: 'List of large cap stocks on NSE India ranked by market capitalisation, with live price, P/E and dividend yield. Explore India’s biggest large-cap companies.',
+    h1: 'Large Cap Stocks List — NSE India',
+    intro: 'India’s largest companies by market capitalisation, ranked live. Large-cap stocks are typically more stable and liquid, making them core holdings for long-term portfolios.',
+    faq: [
+      { q: 'What is a large cap stock?', a: 'Large cap stocks are companies with very high market capitalisation (broadly the top 100 listed firms). They tend to be more stable and liquid than mid or small caps.' },
+    ],
+    pick: (l) => l.filter((x) => /large/i.test(x.cap_category || '')).sort((a, b) => (b.market_cap || 0) - (a.market_cap || 0)),
+  },
+  {
+    slug: 'mid-cap-stocks',
+    aliases: ['midcap-stocks'],
+    linkText: 'Mid Cap Stocks',
+    title: 'Mid Cap Stocks List NSE India 2026 — Best Mid Cap Shares | Arthika',
+    desc: 'List of mid cap stocks on NSE India ranked by market cap with live price, P/E and dividend yield. Discover India’s top mid-cap companies for growth.',
+    h1: 'Mid Cap Stocks List — NSE India',
+    intro: 'Mid-cap NSE companies ranked live by market capitalisation. Mid caps can offer higher growth than large caps with more volatility — useful for investors seeking the next leaders.',
+    faq: [
+      { q: 'What is a mid cap stock?', a: 'Mid cap stocks sit between large and small caps by market capitalisation (broadly ranks 101–250). They balance growth potential with moderate risk.' },
+    ],
+    pick: (l) => l.filter((x) => /mid/i.test(x.cap_category || '')).sort((a, b) => (b.market_cap || 0) - (a.market_cap || 0)),
+  },
+  {
+    slug: 'small-cap-stocks',
+    aliases: ['smallcap-stocks'],
+    linkText: 'Small Cap Stocks',
+    title: 'Small Cap Stocks List NSE India 2026 — High Growth Small Caps | Arthika',
+    desc: 'List of small cap stocks on NSE India with live price, market cap, P/E and dividend yield. Find high-growth, high-risk small-cap shares in India.',
+    h1: 'Small Cap Stocks List — NSE India',
+    intro: 'Small-cap NSE companies ranked live by market capitalisation. Small caps can multiply quickly but carry higher risk and lower liquidity — size positions carefully.',
+    faq: [
+      { q: 'Are small cap stocks high risk?', a: 'Yes. Small caps can deliver outsized returns but are more volatile and less liquid than large or mid caps. Diversify and research thoroughly.' },
+    ],
+    pick: (l) => l.filter((x) => /small/i.test(x.cap_category || '')).sort((a, b) => (b.market_cap || 0) - (a.market_cap || 0)),
+  },
+  {
+    slug: 'most-active-stocks',
+    aliases: ['high-volume-stocks', 'most-traded-stocks'],
+    linkText: 'Most Active Stocks',
+    title: 'Most Active Stocks NSE Today — Highest Volume Shares Live | Arthika',
+    desc: 'Most active stocks on NSE today by traded volume, updating live. Track the highest-volume, most-traded Indian shares for intraday momentum.',
+    h1: 'Most Active Stocks Today — NSE by Volume',
+    intro: 'The most active NSE stocks today, ranked live by traded volume. High volume signals strong participation and is a key input for intraday and breakout trading.',
+    faq: [
+      { q: 'What are the most active stocks today?', a: 'Most active stocks are those with the highest traded volume in the session. Arthika ranks NSE stocks live by volume so you can spot where the action is.' },
+    ],
+    pick: (l) => l.slice().sort((a, b) => (b.volume || 0) - (a.volume || 0)),
+  },
+  {
+    slug: 'penny-stocks',
+    aliases: ['penny-stocks-india', 'best-penny-stocks'],
+    linkText: 'Penny Stocks',
+    title: 'Penny Stocks India 2026 — NSE Stocks Under ₹50 Live List | Arthika',
+    desc: 'Live list of penny stocks in India under ₹50 on NSE, ranked by volume with price and market cap. Explore low-price Indian shares (high risk).',
+    h1: 'Penny Stocks India — NSE Under ₹50',
+    intro: 'NSE-listed penny stocks priced under ₹50, ranked live by traded volume. Penny stocks are highly speculative and volatile — they can move sharply in both directions, so invest only what you can afford to lose.',
+    faq: [
+      { q: 'What are penny stocks?', a: 'Penny stocks are low-priced shares (here, under ₹50) of small companies. They are high-risk and volatile, often with low liquidity and limited disclosures.' },
+      { q: 'Are penny stocks a good investment?', a: 'Penny stocks can deliver large gains but also large losses. They are speculative; research fundamentals and never over-allocate.' },
+    ],
+    pick: (l) => l.filter((x) => x.ltp > 0 && x.ltp < 50).sort((a, b) => (b.volume || 0) - (a.volume || 0)),
+  },
+];
+
+/* ---- Sectors (curated NSE constituents → live data) ---- */
+const SECTORS = [
+  { slug: 'it', name: 'IT', linkText: 'IT Stocks', kw: 'IT & software',
+    symbols: ['INFY','TCS','WIPRO','HCLTECH','TECHM','LTIM','MPHASIS','PERSISTENT','COFORGE','LTTS','OFSS','KPITTECH'] },
+  { slug: 'bank', name: 'Banking', linkText: 'Bank Stocks', kw: 'banking',
+    symbols: ['HDFCBANK','ICICIBANK','SBIN','KOTAKBANK','AXISBANK','INDUSINDBK','BANKBARODA','PNB','IDFCFIRSTB','FEDERALBNK','AUBANK','CANBK'] },
+  { slug: 'pharma', name: 'Pharma', linkText: 'Pharma Stocks', kw: 'pharmaceutical',
+    symbols: ['SUNPHARMA','DRREDDY','CIPLA','DIVISLAB','AUROPHARMA','LUPIN','TORNTPHARM','ALKEM','BIOCON','ZYDUSLIFE','MANKIND','GLENMARK'] },
+  { slug: 'auto', name: 'Auto', linkText: 'Auto Stocks', kw: 'automobile',
+    symbols: ['TATAMOTORS','M&M','MARUTI','BAJAJ-AUTO','EICHERMOT','HEROMOTOCO','TVSMOTOR','ASHOKLEY','BOSCHLTD','MOTHERSON','BHARATFORG','BALKRISIND'] },
+  { slug: 'fmcg', name: 'FMCG', linkText: 'FMCG Stocks', kw: 'FMCG & consumer',
+    symbols: ['HINDUNILVR','ITC','NESTLEIND','BRITANNIA','DABUR','MARICO','GODREJCP','COLPAL','TATACONSUM','VBL','UBL','EMAMILTD'] },
+  { slug: 'energy', name: 'Energy & Power', linkText: 'Energy Stocks', kw: 'energy & power',
+    symbols: ['RELIANCE','ONGC','NTPC','POWERGRID','COALINDIA','IOC','BPCL','GAIL','ADANIGREEN','TATAPOWER','ADANIPOWER','NHPC'] },
+  { slug: 'metal', name: 'Metal', linkText: 'Metal Stocks', kw: 'metals & mining',
+    symbols: ['TATASTEEL','JSWSTEEL','HINDALCO','VEDL','JINDALSTEL','SAIL','NMDC','HINDZINC','NATIONALUM','APLAPOLLO','JSL','RATNAMANI'] },
+  { slug: 'realty', name: 'Realty', linkText: 'Realty Stocks', kw: 'real estate',
+    symbols: ['DLF','GODREJPROP','OBEROIRLTY','PRESTIGE','PHOENIXLTD','BRIGADE','SOBHA','LODHA','MAHLIFE','SUNTECK'] },
+  { slug: 'nbfc', name: 'NBFC & Finance', linkText: 'NBFC & Finance Stocks', kw: 'NBFC & financial services',
+    symbols: ['BAJFINANCE','BAJAJFINSV','CHOLAFIN','SHRIRAMFIN','MUTHOOTFIN','LICHSGFIN','PFC','RECLTD','SBICARD','HDFCLIFE','SBILIFE','ICICIGI'] },
+  { slug: 'infra', name: 'Infra & Capital Goods', linkText: 'Infra Stocks', kw: 'infrastructure & capital goods',
+    symbols: ['LT','ADANIPORTS','ULTRACEMCO','GRASIM','SHREECEM','AMBUJACEM','ACC','SIEMENS','ABB','BHEL','CUMMINSIND','BEL'] },
+];
+
+/* ---- Indices (curated constituents → live data) ---- */
+const INDICES = [
+  { slug: 'nifty-50', name: 'Nifty 50', kw: 'Nifty 50',
+    symbols: ['RELIANCE','HDFCBANK','ICICIBANK','INFY','TCS','ITC','LT','BHARTIARTL','SBIN','AXISBANK','KOTAKBANK','HINDUNILVR','BAJFINANCE','M&M','MARUTI','SUNPHARMA','NTPC','TATAMOTORS','HCLTECH','POWERGRID','TITAN','ULTRACEMCO','ASIANPAINT','WIPRO','ADANIENT','ADANIPORTS','ONGC','COALINDIA','NESTLEIND','TATASTEEL','JSWSTEEL','BAJAJFINSV','GRASIM','HINDALCO','TECHM','DRREDDY','CIPLA','BRITANNIA','EICHERMOT','HEROMOTOCO','DIVISLAB','APOLLOHOSP','BPCL','TATACONSUM','INDUSINDBK','BAJAJ-AUTO','SBILIFE','HDFCLIFE','LTIM','SHRIRAMFIN'] },
+  { slug: 'nifty-bank', name: 'Nifty Bank', kw: 'Bank Nifty',
+    symbols: ['HDFCBANK','ICICIBANK','SBIN','KOTAKBANK','AXISBANK','INDUSINDBK','BANKBARODA','PNB','IDFCFIRSTB','FEDERALBNK','AUBANK','CANBK'] },
+  { slug: 'nifty-it', name: 'Nifty IT', kw: 'Nifty IT',
+    symbols: ['INFY','TCS','WIPRO','HCLTECH','TECHM','LTIM','MPHASIS','PERSISTENT','COFORGE','LTTS'] },
+  { slug: 'nifty-pharma', name: 'Nifty Pharma', kw: 'Nifty Pharma',
+    symbols: ['SUNPHARMA','DRREDDY','CIPLA','DIVISLAB','AUROPHARMA','LUPIN','TORNTPHARM','ALKEM','BIOCON','ZYDUSLIFE'] },
+  { slug: 'nifty-auto', name: 'Nifty Auto', kw: 'Nifty Auto',
+    symbols: ['TATAMOTORS','M&M','MARUTI','BAJAJ-AUTO','EICHERMOT','HEROMOTOCO','TVSMOTOR','ASHOKLEY','BOSCHLTD','MOTHERSON'] },
+  { slug: 'nifty-fmcg', name: 'Nifty FMCG', kw: 'Nifty FMCG',
+    symbols: ['HINDUNILVR','ITC','NESTLEIND','BRITANNIA','DABUR','MARICO','GODREJCP','COLPAL','TATACONSUM','VBL'] },
+];
+
+/* ---- Generic renderer for a data-backed listing page ---- */
+function renderListing(res, { canonical, title, desc, h1, crumb, intro, items, faq, ldName }) {
+  const table = stockTableHtml(items, 50);
+  const safeTable = table || '<p>Live data is updating — please refresh shortly.</p>';
+  const jsonLd = [websiteLd(), orgLd(), breadcrumbLd(crumb)];
+  if (faq) jsonLd.push(faqLd(faq));
+  if (items && items.length) jsonLd.push(itemListLd(items, ldName || h1));
+  const bodyHtml = `<h1>${esc(h1)}</h1><p>${esc(intro)}</p>${safeTable}${faqHtml(faq)}`;
+  res.type('html').send(injectSEO(readIndex(), {
+    title, description: desc, canonical: SITE_URL + canonical, jsonLd, bodyHtml,
+  }));
+}
+
+function renderDirectory(res, { canonical, title, desc, h1, crumb, intro, listHtml }) {
+  const jsonLd = [websiteLd(), orgLd(), breadcrumbLd(crumb)];
+  const bodyHtml = `<h1>${esc(h1)}</h1><p>${esc(intro)}</p>${listHtml}`;
+  res.type('html').send(injectSEO(readIndex(), {
+    title, description: desc, canonical: SITE_URL + canonical, jsonLd, bodyHtml,
+  }));
+}
+
 function buildHub(hub) {
   return async (req, res) => {
     let section = '';
@@ -362,6 +549,101 @@ function registerSEOPages(app) {
     app.get(hub.path, handler);
     for (const alias of hub.aliases || []) app.get(alias, handler);
   }
+
+  /* ---- Theme screen pages (/high-dividend-stocks, /value-stocks, …) ---- */
+  for (const t of THEMES) {
+    const handler = async (req, res) => {
+      const list = await universe();
+      const items = t.pick(list).slice(0, 50);
+      renderListing(res, {
+        canonical: `/${t.slug}`,
+        title: t.title,
+        desc: t.desc,
+        h1: t.h1,
+        crumb: [{ name: 'Home', path: '/' }, { name: 'Screeners', path: '/screeners' }, { name: t.linkText, path: `/${t.slug}` }],
+        intro: t.intro,
+        items,
+        faq: t.faq,
+        ldName: t.h1,
+      });
+    };
+    app.get(`/${t.slug}`, handler);
+    for (const a of t.aliases || []) app.get(`/${a}`, handler);
+  }
+
+  /* ---- Sector pages (/stocks/sector/:slug) ---- */
+  for (const sec of SECTORS) {
+    app.get(`/stocks/sector/${sec.slug}`, async (req, res) => {
+      const list = await universe();
+      const items = bySymbols(list, sec.symbols);
+      renderListing(res, {
+        canonical: `/stocks/sector/${sec.slug}`,
+        title: `${sec.name} Stocks List NSE India 2026 — Best ${sec.name} Shares Live | Arthika`,
+        desc: `Best ${sec.name} sector stocks on NSE India with live share price, P/E, market cap and dividend yield. Track top ${sec.kw} stocks and compare them in real time.`,
+        h1: `${sec.name} Sector Stocks — NSE India`,
+        crumb: [{ name: 'Home', path: '/' }, { name: 'Sectors', path: '/sectors' }, { name: sec.name, path: `/stocks/sector/${sec.slug}` }],
+        intro: `Top ${sec.kw} stocks listed on the NSE, with live prices, P/E ratios, market caps and dividend yields. Compare the leading ${sec.name} companies in India and open any stock for fundamentals, technicals and an AI read.`,
+        items,
+        faq: [
+          { q: `Which are the top ${sec.name} stocks in India?`, a: `Leading NSE ${sec.kw} stocks include ${sec.symbols.slice(0, 6).join(', ')} and more. The table above shows their live prices and valuations.` },
+          { q: `How do I invest in ${sec.name} sector stocks?`, a: `Research each company’s fundamentals, valuation and growth, then track them live on Arthika. This is educational information, not investment advice.` },
+        ],
+        ldName: `${sec.name} stocks`,
+      });
+    });
+  }
+
+  /* ---- Index pages (/index/:slug) ---- */
+  for (const idx of INDICES) {
+    app.get(`/index/${idx.slug}`, async (req, res) => {
+      const list = await universe();
+      const items = bySymbols(list, idx.symbols);
+      renderListing(res, {
+        canonical: `/index/${idx.slug}`,
+        title: `${idx.name} Stocks List Today — Live Prices, Weightage & Returns | Arthika`,
+        desc: `${idx.name} constituents with live share prices, change %, P/E and market cap. Track all ${idx.name} index stocks in real time on Arthika.`,
+        h1: `${idx.name} Stocks List — Live`,
+        crumb: [{ name: 'Home', path: '/' }, { name: 'Indices', path: '/sectors' }, { name: idx.name, path: `/index/${idx.slug}` }],
+        intro: `All ${idx.kw} index stocks with live prices, today’s change, P/E and market cap. Monitor the ${idx.name} constituents in real time and open any stock for deeper analysis.`,
+        items,
+        faq: [
+          { q: `What stocks are in the ${idx.name}?`, a: `The ${idx.name} includes ${idx.symbols.slice(0, 8).join(', ')} among others. The table above lists the constituents with live data.` },
+        ],
+        ldName: `${idx.name} constituents`,
+      });
+    });
+  }
+
+  /* ---- Directory hubs (crawl + internal links) ---- */
+  app.get(['/screeners', '/stock-screeners'], (req, res) => {
+    const cards = THEMES.map((t) =>
+      `<li><a href="/${t.slug}">${esc(t.h1)}</a> — ${esc(t.linkText)}</li>`).join('');
+    renderDirectory(res, {
+      canonical: '/screeners',
+      title: 'Stock Screeners — High Dividend, Value, Large/Mid/Small Cap, Penny & More | Arthika',
+      desc: 'All Arthika stock screeners for NSE India: high dividend stocks, undervalued low-P/E value stocks, large/mid/small cap lists, most active and penny stocks — updated live.',
+      h1: 'NSE Stock Screeners',
+      crumb: [{ name: 'Home', path: '/' }, { name: 'Screeners', path: '/screeners' }],
+      intro: 'Browse every live stock screen on Arthika. Each screen filters the full NSE universe in real time so you can find dividend, value, large-cap, mid-cap, small-cap, high-volume and penny stocks instantly.',
+      listHtml: `<ul>${cards}</ul>`,
+    });
+  });
+
+  app.get(['/sectors', '/indices'], (req, res) => {
+    const secCards = SECTORS.map((s) =>
+      `<li><a href="/stocks/sector/${s.slug}">${esc(s.name)} sector stocks</a></li>`).join('');
+    const idxCards = INDICES.map((i) =>
+      `<li><a href="/index/${i.slug}">${esc(i.name)} stocks list</a></li>`).join('');
+    renderDirectory(res, {
+      canonical: '/sectors',
+      title: 'NSE Sectors & Indices — IT, Bank, Pharma, Auto, FMCG Stock Lists | Arthika',
+      desc: 'Explore NSE stocks by sector and index — IT, banking, pharma, auto, FMCG, energy, metal, realty, NBFC and infra, plus Nifty 50, Bank Nifty and Nifty IT constituents with live data.',
+      h1: 'Stocks by Sector & Index — NSE India',
+      crumb: [{ name: 'Home', path: '/' }, { name: 'Sectors', path: '/sectors' }],
+      intro: 'Browse NSE stocks grouped by sector and by index. Each page lists the leading constituents with live prices, valuations and dividend yields so you can compare companies within a theme.',
+      listHtml: `<h2>By sector</h2><ul>${secCards}</ul><h2>By index</h2><ul>${idxCards}</ul>`,
+    });
+  });
 
   app.get('/stocks/:symbol', async (req, res) => {
     const sym = stock.sym(req.params.symbol);
@@ -431,11 +713,20 @@ async function buildSitemap() {
   const base = SITE_URL;
   const urls = [];
   for (const hub of HUBS) urls.push({ loc: base + hub.canonical, pri: hub.path === '/' ? '1.0' : '0.8' });
-  urls.push({ loc: base + '/discover', pri: '0.6' });
+  // Directory hubs
+  ['/screeners', '/sectors'].forEach((p) => urls.push({ loc: base + p, pri: '0.7' }));
+  // Theme screens
+  THEMES.forEach((t) => urls.push({ loc: `${base}/${t.slug}`, pri: '0.8' }));
+  // Sector + index pages
+  SECTORS.forEach((s) => urls.push({ loc: `${base}/stocks/sector/${s.slug}`, pri: '0.7' }));
+  INDICES.forEach((i) => urls.push({ loc: `${base}/index/${i.slug}`, pri: '0.7' }));
+  // Discover feeds
+  urls.push({ loc: base + '/discover', pri: '0.5' });
   ['ipo', 'results', 'candlestick', 'ban', 'insider', 'lotsize', 'global', 'commodities']
-    .forEach((t) => urls.push({ loc: `${base}/discover/${t}`, pri: '0.5' }));
+    .forEach((t) => urls.push({ loc: `${base}/discover/${t}`, pri: '0.4' }));
+  // Every stock in the live universe (~2500 pages)
   try {
-    const list = await stock.getScreenerList({ limit: 300 });
+    const list = await universe();
     list.forEach((s) => urls.push({ loc: `${base}/stocks/${String(s.symbol).toLowerCase()}`, pri: '0.6' }));
   } catch (_) {}
 
