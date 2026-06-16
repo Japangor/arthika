@@ -10,6 +10,9 @@ require('dotenv').config();
 
 const stock = require('./stockData');
 const { registerSEOPages, robotsTxt, buildSitemap } = require('./seoPages');
+const { getNews } = require('./news');
+const { registerNotifyRoutes } = require('./notify');
+const { registerIapRoutes } = require('./iap');
 
 const app = express();
 const PORT = process.env.PORT || 3010;
@@ -34,6 +37,21 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.get('/api/health', (_req, res) => {
   res.json({ ok: true, service: 'arthika', ts: Date.now() });
 });
+
+// --- Finance / markets news (free RSS aggregation) ---
+app.get('/api/news', async (req, res) => {
+  try {
+    const limit = Math.min(parseInt(req.query.limit, 10) || 40, 80);
+    const data = await getNews(limit);
+    res.json({ status: 1, count: data.length, data });
+  } catch (e) {
+    res.status(500).json({ status: 0, error: e.message });
+  }
+});
+
+// --- IAP verification + cron-driven push notifications ---
+registerIapRoutes(app);
+registerNotifyRoutes(app);
 
 // --- Market ---
 app.get('/api/market/indices', async (_req, res) => {
