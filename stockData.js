@@ -179,7 +179,10 @@ async function getBanList() {
 
 async function getFnoLotSize() {
   const raw = await resGet('/api/v1/Resource/fno-lot-size', { ttl: 21600000 });
-  return unwrapRes(raw, []) || [];
+  const rd = unwrapRes(raw, []);
+  // resultData is { data: [...] }
+  if (rd && Array.isArray(rd.data)) return rd.data;
+  return Array.isArray(rd) ? rd : [];
 }
 
 async function getResultsCalendar() {
@@ -200,7 +203,29 @@ async function getCandlestickPatterns(period = 'day') {
       ? '/api/nse-candle-sticks/per-week-patterns'
       : '/api/nse-candle-sticks/per-day-patterns';
   const raw = await webGet(path, { ttl: 600000 });
-  return unwrapWeb(raw, []) || [];
+  const data = unwrapWeb(raw, {}) || {};
+  // data is an object keyed by pattern name (+ "available_pattens"); flatten
+  // every pattern array into a single list of tagged stock rows.
+  if (Array.isArray(data)) return data;
+  const out = [];
+  for (const [key, val] of Object.entries(data)) {
+    if (key === 'available_pattens' || !Array.isArray(val)) continue;
+    for (const row of val) {
+      out.push({
+        symbol: sym(row.symbol_name || row.symbol),
+        symbol_name: row.symbol_name,
+        pattern: row.pattern_type || key,
+        sentiment: row.pattern_sentiment || '',
+        date: row.candle_date || row.date,
+        open: num(row.o ?? row.open),
+        high: num(row.h ?? row.high),
+        low: num(row.l ?? row.low),
+        close: num(row.c ?? row.close),
+        change_percent: num(row.change_percent),
+      });
+    }
+  }
+  return out;
 }
 
 // --- Recommendations ---
