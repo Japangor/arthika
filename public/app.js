@@ -54,6 +54,12 @@ function dateShort(s) {
   return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 function spinner() { return '<div class="loading-screen"><span class="spinner"></span></div>'; }
+function adSlot(placement, opts) {
+  opts = opts || {};
+  const slot = opts.slot || '4698617583';
+  const fmt = opts.format ? ` data-ad-format="${opts.format}"` : '';
+  return `<div class="mkt-slot mkt-slot--inline" data-ad-slot="${slot}"${fmt} data-ad-placement="${placement}"></div>`;
+}
 
 /* ------------------------------------------------------------------ */
 /* Router                                                            */
@@ -127,6 +133,7 @@ async function viewHome() {
       <div class="panel"><h2>Top Gainers <a class="more" data-go="/gainers">View all →</a></h2><div id="gainers">${spinner()}</div></div>
       <div class="panel"><h2>Top Losers <a class="more" data-go="/losers">View all →</a></h2><div id="losers">${spinner()}</div></div>
     </div>
+    ${adSlot('home-mid')}
     <div class="panel" style="margin-top:1rem"><h2>AI Recommendations <span class="tag gold">Pro = full list</span></h2><div id="recommend">${spinner()}</div></div>
     <div class="section-title">Explore</div>
     <div id="home-disc" class="disc-grid"></div>
@@ -189,6 +196,7 @@ async function viewScreener(initial = 'all') {
     <div class="toolbar" id="filters">${FILTERS.map(([v, l]) =>
       `<span class="chip ${v === initial ? 'active' : ''}" data-f="${v}">${l}</span>`).join('')}</div>
     <input type="search" id="scr-search" placeholder="Filter loaded results…" style="width:100%;padding:0.6rem 1rem;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--text);margin-bottom:1rem">
+    ${adSlot('screener-top')}
     <div id="scr-table">${spinner()}</div>
   `;
   loadTicker();
@@ -272,7 +280,8 @@ function discCard(d) {
 }
 function viewDiscover() {
   app.innerHTML = `<section class="hero"><h1><em>Discover</em></h1><p class="sub">IPOs, results, ban list, insider trades, patterns & global markets.</p></section>
-    <div class="disc-grid">${DISCOVER.map(discCard).join('')}</div>`;
+    <div class="disc-grid">${DISCOVER.map(discCard).join('')}</div>
+    ${adSlot('discover-bottom')}`;
   bindGo(app);
   loadTicker();
 }
@@ -289,7 +298,7 @@ const FEED_API = {
 async function viewFeed(type) {
   const meta = DISCOVER.find((d) => d.type === type) || { title: 'Feed' };
   app.innerHTML = `<div class="crumbs"><a data-link href="/discover">Discover</a> › ${meta.title}</div>
-    <section class="hero" style="padding-top:0"><h1>${meta.title}</h1></section><div id="feed">${spinner()}</div>`;
+    <section class="hero" style="padding-top:0"><h1>${meta.title}</h1></section>${adSlot('feed-top')}<div id="feed">${spinner()}</div>`;
   bindGo(app);
   loadTicker();
   const el = $('#feed');
@@ -366,6 +375,7 @@ const STOCK_TABS = ['Overview', 'Valuation', 'Technicals', 'Shareholding', 'Peer
 async function viewStock(symbol) {
   app.innerHTML = `<div class="crumbs"><a data-link href="/">Markets</a> › <a data-link href="/screener">Stocks</a> › ${esc(symbol)}</div>
     <div id="stk-head">${spinner()}</div>
+    ${adSlot('stock-top')}
     <div class="tabs" id="stk-tabs"></div>
     <div id="stk-body"></div>`;
   bindGo(app);

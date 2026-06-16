@@ -152,3 +152,10 @@ table.data tbody tr:hover { background: var(--surface2); }
 .footer .disclaimer { font-size: 0.75rem; margin-top: 0.4rem; opacity: 0.8; }
 .hidden { display: none !important; }
 #seo-content { display: none; }
+
+/* Ad slots */
+.mkt-slot { display: block; margin: 1.25rem auto; max-width: 1180px; text-align: center; min-height: 1px; overflow: hidden; }
+.mkt-slot--banner { margin: 0.75rem auto; padding: 0 1.25rem; }
+.mkt-slot--inline { margin: 1.25rem 0; }
+.mkt-slot--multiplex { margin: 1.5rem auto; padding: 0 1.25rem; }
+.mkt-slot .adsbygoogle { display: block; }
