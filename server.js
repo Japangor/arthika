@@ -371,7 +371,7 @@ app.get('/robots.txt', (req, res) => {
 // SPA fallback
 app.get('*', (req, res, next) => {
   if (req.path.startsWith('/api/')) return next();
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  res.sendFile(path.join(__dirname, 'public', 'shell.html'));
 });
 
 if (!IS_SERVERLESS) {

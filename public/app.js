@@ -88,10 +88,15 @@ async function render() {
   if (stock) return viewStock(stock[1].toUpperCase());
   const disc = path.match(/^\/discover\/([a-z]+)/i);
   if (disc) return viewFeed(disc[1]);
-  if (path === '/screener') return viewScreener();
+  if (path === '/screener' || path === '/stock-screener') return viewScreener('value');
+  if (path === '/intraday-trades' || path === '/intraday') return viewScreener('volume');
   if (path === '/discover') return viewDiscover();
-  if (path === '/gainers') return viewScreener('gainers');
-  if (path === '/losers') return viewScreener('losers');
+  if (path === '/gainers' || path === '/top-gainers') return viewScreener('gainers');
+  if (path === '/losers' || path === '/top-losers') return viewScreener('losers');
+  if (path === '/ipo' || path === '/ipo-calendar') return viewFeed('ipo');
+  if (path === '/results-calendar' || path === '/results') return viewFeed('results');
+  if (path === '/fno-ban-list' || path === '/ban-list') return viewFeed('ban');
+  if (path === '/stocks' || path === '/nse-stocks') return viewScreener('all');
   return viewHome();
 }
 
@@ -130,8 +135,8 @@ async function viewHome() {
     </section>
     <div id="commodities"></div>
     <div class="two-col" style="margin-top:1rem">
-      <div class="panel"><h2>Top Gainers <a class="more" data-go="/gainers">View all →</a></h2><div id="gainers">${spinner()}</div></div>
-      <div class="panel"><h2>Top Losers <a class="more" data-go="/losers">View all →</a></h2><div id="losers">${spinner()}</div></div>
+      <div class="panel"><h2>Top Gainers <a class="more" data-go="/top-gainers">View all →</a></h2><div id="gainers">${spinner()}</div></div>
+      <div class="panel"><h2>Top Losers <a class="more" data-go="/top-losers">View all →</a></h2><div id="losers">${spinner()}</div></div>
     </div>
     ${adSlot('home-mid')}
     <div class="panel" style="margin-top:1rem"><h2>AI Recommendations <span class="tag gold">Pro = full list</span></h2><div id="recommend">${spinner()}</div></div>
