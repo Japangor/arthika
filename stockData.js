@@ -253,58 +253,62 @@ async function getMovingAverages(symbol) {
   return unwrapWeb(raw, {}) || {};
 }
 
-async function getProfitLoss(symbol) {
-  const raw = await webGet(`/api/Analysis/profit-loss/${sym(symbol)}`, { ttl: 21600000 });
-  return unwrapWeb(raw, {}) || {};
+async function getProfitLoss(symbol, period = 'annual', type = 'consolidated') {
+  const raw = await resGet(
+    `/api/Analysis/profit-loss/${sym(symbol)}/${period}/${type}`,
+    { ttl: 21600000 }
+  );
+  return unwrapRes(raw, []) || [];
 }
 
-async function getBalanceSheet(symbol) {
-  const raw = await webGet(`/api/Analysis/balance-sheet/${sym(symbol)}`, { ttl: 21600000 });
-  return unwrapWeb(raw, {}) || {};
+async function getBalanceSheet(symbol, period = 'annual', type = 'consolidated') {
+  const raw = await resGet(
+    `/api/Analysis/balance-sheet/${sym(symbol)}/${period}/${type}`,
+    { ttl: 21600000 }
+  );
+  return unwrapRes(raw, []) || [];
 }
 
-async function getCashFlow(symbol) {
-  const raw = await webGet(`/api/Analysis/cash-flow/${sym(symbol)}`, { ttl: 21600000 });
-  return unwrapWeb(raw, {}) || {};
+async function getCashFlow(symbol, period = 'annual', type = 'consolidated') {
+  const raw = await resGet(
+    `/api/Analysis/cash-flow/${sym(symbol)}/${period}/${type}`,
+    { ttl: 21600000 }
+  );
+  return unwrapRes(raw, []) || [];
 }
 
 async function getShareholdingPattern(symbol) {
-  const raw = await webGet(`/api/Analysis/shareholding-pattern/${sym(symbol)}`, {
-    ttl: 3600000,
-  });
-  return unwrapWeb(raw, {}) || {};
+  const raw = await resGet(
+    `/api/Analysis/shareholding-pattern/${sym(symbol)}/quarterly`,
+    { ttl: 3600000 }
+  );
+  return unwrapRes(raw, {}) || {};
 }
 
 async function getCorpActions(symbol) {
-  const raw = await webGet('/api/Analysis/corp-action', {
+  const raw = await resGet(`/api/Analysis/corp-action/${sym(symbol)}`, {
     ttl: 3600000,
-    params: { symbol: sym(symbol) },
   });
-  return unwrapWeb(raw, []) || [];
+  return unwrapRes(raw, {}) || {};
 }
 
 async function getCorpAnnouncements(symbol) {
-  const raw = await webGet('/api/Analysis/corp-annoucements', {
-    ttl: 300000,
-    params: { symbol: sym(symbol) },
+  const raw = await resGet(`/api/Analysis/corp-annoucements/${sym(symbol)}`, {
+    ttl: 600000,
   });
-  return unwrapWeb(raw, []) || [];
+  const d = unwrapRes(raw, {}) || {};
+  return d.corp_announcements || d || [];
 }
 
-async function getHistoricalChart(symbol) {
-  const raw = await webGet('/api/Analysis/historical-chart', {
+async function getReturns(symbol) {
+  const raw = await resGet(`/api/Analysis/historical-chart/${sym(symbol)}`, {
     ttl: 300000,
-    params: { symbol: sym(symbol) },
   });
-  return unwrapWeb(raw, []) || [];
-}
-
-async function getRatioChart(symbol) {
-  const raw = await webGet('/api/Analysis/ratio-chart', {
-    ttl: 3600000,
-    params: { symbol: sym(symbol) },
-  });
-  return unwrapWeb(raw, {}) || {};
+  const d = unwrapRes(raw, {}) || {};
+  return {
+    stock_return: d.stock_return || {},
+    historical_data: d.historical_data || [],
+  };
 }
 
 async function getValuationScore() {
@@ -402,11 +406,10 @@ async function searchStocks(q, limit = 25) {
 
 async function getStockOverview(symbol) {
   const s = sym(symbol);
-  const [universe, recs, technicals, ratios] = await Promise.all([
+  const [universe, recs, technicals] = await Promise.all([
     getStockUniverse().catch(() => []),
     getRecommendations().catch(() => ({ buy: [], sell: [] })),
     getTechnicalIndicators(s).catch(() => ({})),
-    getRatioChart(s).catch(() => ({})),
   ]);
 
   const fromUniverse = universe.find((r) => r.symbol === s);
@@ -434,7 +437,6 @@ async function getStockOverview(symbol) {
       low52: base.low52,
     },
     technicals,
-    ratios,
     recommendation: (recs.buy || []).some((r) => sym(r.symbol_name) === s)
       ? 'buy'
       : (recs.sell || []).some((r) => sym(r.symbol_name) === s)
@@ -495,8 +497,7 @@ module.exports = {
   getShareholdingPattern,
   getCorpActions,
   getCorpAnnouncements,
-  getHistoricalChart,
-  getRatioChart,
+  getReturns,
   getStockOverview,
   getPeers,
   sym,

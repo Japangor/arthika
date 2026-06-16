@@ -250,12 +250,20 @@ app.get('/api/stock/:symbol/financials', async (req, res) => {
 app.get('/api/stock/:symbol/technicals', async (req, res) => {
   try {
     const s = req.params.symbol;
-    const [indicators, ma, chart] = await Promise.all([
-      stock.getTechnicalIndicators(s),
-      stock.getMovingAverages(s),
-      stock.getHistoricalChart(s),
+    const [indicators, ma] = await Promise.all([
+      stock.getTechnicalIndicators(s).catch(() => ({})),
+      stock.getMovingAverages(s).catch(() => ({})),
     ]);
-    res.json({ status: 1, data: { indicators, movingAverages: ma, chart } });
+    res.json({ status: 1, data: { indicators, movingAverages: ma } });
+  } catch (e) {
+    res.status(500).json({ status: 0, error: e.message });
+  }
+});
+
+app.get('/api/stock/:symbol/returns', async (req, res) => {
+  try {
+    const data = await stock.getReturns(req.params.symbol);
+    res.json({ status: 1, data });
   } catch (e) {
     res.status(500).json({ status: 0, error: e.message });
   }

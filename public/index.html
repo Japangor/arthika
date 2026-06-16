@@ -4,57 +4,33 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Arthika — Stock Screener & AI Markets | NSE Live</title>
-  <meta name="description" content="Arthika: NSE stock screener, live prices, AI insights, gainers & losers. Not investment advice.">
+  <meta name="description" content="Arthika: NSE stock screener, live prices, AI insights, gainers & losers, IPO & results calendar, F&O ban list. Not investment advice.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/style.css">
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3483870164836220" crossorigin="anonymous"></script>
 </head>
 <body>
   <header class="header">
-    <a href="/" class="logo">Arthika<span>Markets</span></a>
-    <nav>
-      <a href="/stocks">Stocks</a>
-      <a href="/screener">Screener</a>
-      <a href="/gainers">Gainers</a>
-      <a href="/losers">Losers</a>
+    <a href="/" class="logo" data-link>Arthika<span>Markets</span></a>
+    <nav class="topnav">
+      <a href="/" data-link>Markets</a>
+      <a href="/screener" data-link>Screener</a>
+      <a href="/discover" data-link>Discover</a>
     </nav>
-    <input type="search" id="search" placeholder="Search symbol…" aria-label="Search stocks">
+    <div class="search-wrap">
+      <input type="search" id="search" placeholder="Search NSE stocks…" autocomplete="off" aria-label="Search stocks">
+      <div id="search-results" class="search-results hidden"></div>
+    </div>
   </header>
 
-  <main id="app">
-    <section class="hero">
-      <h1>Stock Screener &amp; <em>AI Markets</em></h1>
-      <p class="sub">NSE live prices · screeners · AI insights · not investment advice</p>
-    </section>
+  <div id="ticker" class="ticker" aria-hidden="true"></div>
 
-    <section id="indices" class="card-grid"></section>
-
-    <section class="two-col">
-      <div class="panel">
-        <h2>Top Gainers</h2>
-        <div id="gainers" class="stock-list"></div>
-      </div>
-      <div class="panel">
-        <h2>Top Losers</h2>
-        <div id="losers" class="stock-list"></div>
-      </div>
-    </section>
-
-    <section class="panel">
-      <h2>AI Recommendations</h2>
-      <div id="recommend" class="stock-list"></div>
-    </section>
-
-    <section id="detail" class="panel detail hidden">
-      <button id="back" type="button">← Back</button>
-      <h2 id="detail-title"></h2>
-      <div id="detail-body"></div>
-    </section>
-  </main>
+  <main id="app"><div class="loading-screen"><span class="spinner"></span></div></main>
 
   <footer class="footer">
-    <p>© GJam Technologies · Arthika is for education only. Not SEBI-registered advice.</p>
+    <p><strong>Arthika</strong> by GJam Technologies · Data via NSE feeds, may be delayed.</p>
+    <p class="disclaimer">For educational purposes only. Not SEBI-registered investment advice. Markets carry risk.</p>
   </footer>
 
   <script src="/app.js"></script>
