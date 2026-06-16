@@ -12,6 +12,8 @@ const stock = require('./stockData');
 
 const SITE_URL = (process.env.SITE_URL || 'https://arthika.rail24.in').replace(/\/$/, '');
 const BRAND = 'Arthika';
+const APP_ID = 'com.gjam.arthika';
+const PLAY_URL = `https://play.google.com/store/apps/details?id=${APP_ID}`;
 
 let INDEX_HTML = null;
 function readIndex() {
@@ -59,6 +61,22 @@ function orgLd() {
     name: BRAND,
     url: SITE_URL + '/',
     description: 'Live NSE stock screener, intraday trades and AI market insights.',
+  };
+}
+function appLd() {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'MobileApplication',
+    name: 'Arthika: NSE Stock Screener',
+    operatingSystem: 'Android',
+    applicationCategory: 'FinanceApplication',
+    url: SITE_URL + '/app',
+    downloadUrl: PLAY_URL,
+    installUrl: PLAY_URL,
+    description:
+      'Arthika is a free NSE stock screener with live share prices, top gainers & losers, technical indicators, IPO & results calendar and AI-powered insights for Indian stocks.',
+    offers: { '@type': 'Offer', price: '0', priceCurrency: 'INR' },
+    author: { '@type': 'Organization', name: 'GJAM Technologies', url: 'https://gjam.in' },
   };
 }
 function breadcrumbLd(items) {
@@ -126,6 +144,7 @@ function relatedNav() {
   const sectors = SECTORS.slice(0, 8)
     .map((s) => `<li><a href="/stocks/sector/${s.slug}">${esc(s.linkText)}</a></li>`).join('');
   return `<nav aria-label="Explore"><h2>Explore Arthika</h2><ul>
+    <li><a href="/app">Download the Arthika Android App</a></li>
     <li><a href="/stock-screener">Live Stock Screener</a></li>
     <li><a href="/intraday-trades">Intraday Trades Today</a></li>
     <li><a href="/top-gainers">Top Gainers Today</a></li>
@@ -534,6 +553,7 @@ function buildHub(hub) {
     } catch (_) {}
     const canonical = SITE_URL + hub.canonical;
     const jsonLd = [websiteLd(), orgLd(), breadcrumbLd(hub.crumb)];
+    if (hub.path === '/') jsonLd.push(appLd());
     if (hub.faq) jsonLd.push(faqLd(hub.faq));
     if (listForLd.length) jsonLd.push(itemListLd(listForLd, hub.h1));
     const bodyHtml = `<h1>${esc(hub.h1)}</h1><p>${esc(hub.intro)}</p>${section}${faqHtml(hub.faq)}`;
@@ -645,6 +665,48 @@ function registerSEOPages(app) {
     });
   });
 
+  /* ---- App download / install landing page ---- */
+  app.get(['/app', '/download', '/android-app', '/mobile-app'], (req, res) => {
+    const features = [
+      ['Smart stock screener', 'Screen NSE stocks by value, momentum, dividend yield and market cap — find undervalued and high-growth shares fast.'],
+      ['Live NSE markets', 'Live NIFTY 50 & Bank NIFTY, top gainers & losers, market breadth and sector performance, updated in real time.'],
+      ['Deep stock view', 'Live price, 52-week range, P/E, dividend yield, 1W–5Y returns, technical indicators, moving averages and candlestick patterns.'],
+      ['AI stock insights', 'Plain-English AI read on every stock — strengths, risks and what to watch for faster decisions.'],
+      ['Discover', 'IPO calendar, results calendar, F&O ban list & lot sizes, insider activity, global markets, commodities and FX.'],
+      ['Watchlist & search', 'Build a personal watchlist and search across all NSE stocks in a clean, dark, distraction-free design.'],
+    ];
+    const featureHtml = features.map(([t, d]) =>
+      `<h3>${esc(t)}</h3><p>${esc(d)}</p>`).join('');
+    const faq = [
+      { q: 'Is the Arthika app free to download?', a: 'Yes. Arthika is free to download on Google Play and includes a free NSE stock screener, live markets, AI insights and more. An optional one-time Pro unlock removes ads and unlocks full AI and unlimited recommendations.' },
+      { q: 'Which devices does Arthika support?', a: 'Arthika is available for Android phones and tablets on the Google Play Store. Install it on any Android device running a recent Android version.' },
+      { q: 'Does the Arthika app give live NSE prices?', a: 'Yes. Arthika shows live NSE share prices, NIFTY 50 and Bank NIFTY, top gainers and losers and sector performance, sourced from live market feeds (may be delayed).' },
+      { q: 'Is Arthika investment advice?', a: 'No. Arthika is for information and education only and is not SEBI-registered investment advice. Markets carry risk; always do your own research.' },
+    ];
+    const ctaHtml = `<p class="app-cta"><a class="play-btn" href="${PLAY_URL}" rel="nofollow" target="_blank">▶ Get it on Google Play — Free Download</a></p>`;
+    const bodyHtml =
+      `<h1>Download Arthika — NSE Stock Screener App for Android</h1>` +
+      `<p>Arthika is a free Android app to track the Indian stock market like a pro: a powerful NSE stock screener, live share prices, top gainers &amp; losers, technical indicators and AI-powered insights on every stock — fast, clean and free.</p>` +
+      ctaHtml +
+      `<h2>What you get in the Arthika app</h2>${featureHtml}` +
+      ctaHtml +
+      faqHtml(faq);
+    const jsonLd = [
+      websiteLd(),
+      orgLd(),
+      appLd(),
+      breadcrumbLd([{ name: 'Home', path: '/' }, { name: 'Android App', path: '/app' }]),
+      faqLd(faq),
+    ];
+    res.type('html').send(injectSEO(readIndex(), {
+      title: 'Download Arthika App — Free NSE Stock Screener for Android | Arthika',
+      description: 'Download the free Arthika Android app: NSE stock screener, live share prices, top gainers & losers, technical indicators, IPO & results calendar and AI stock insights. Get it on Google Play.',
+      canonical: SITE_URL + '/app',
+      jsonLd,
+      bodyHtml,
+    }));
+  });
+
   app.get('/stocks/:symbol', async (req, res) => {
     const sym = stock.sym(req.params.symbol);
     try {
@@ -713,7 +775,8 @@ async function buildSitemap() {
   const base = SITE_URL;
   const urls = [];
   for (const hub of HUBS) urls.push({ loc: base + hub.canonical, pri: hub.path === '/' ? '1.0' : '0.8' });
-  // Directory hubs
+  // App + directory hubs
+  urls.push({ loc: base + '/app', pri: '0.8' });
   ['/screeners', '/sectors'].forEach((p) => urls.push({ loc: base + p, pri: '0.7' }));
   // Theme screens
   THEMES.forEach((t) => urls.push({ loc: `${base}/${t.slug}`, pri: '0.8' }));
