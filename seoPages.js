@@ -771,27 +771,33 @@ function registerSEOPages(app) {
   });
 }
 
-async function buildSitemap() {
+async function buildSitemapUrlList() {
   const base = SITE_URL;
   const urls = [];
-  for (const hub of HUBS) urls.push({ loc: base + hub.canonical, pri: hub.path === '/' ? '1.0' : '0.8' });
-  // App + directory hubs
-  urls.push({ loc: base + '/app', pri: '0.8' });
-  ['/screeners', '/sectors'].forEach((p) => urls.push({ loc: base + p, pri: '0.7' }));
-  // Theme screens
-  THEMES.forEach((t) => urls.push({ loc: `${base}/${t.slug}`, pri: '0.8' }));
-  // Sector + index pages
-  SECTORS.forEach((s) => urls.push({ loc: `${base}/stocks/sector/${s.slug}`, pri: '0.7' }));
-  INDICES.forEach((i) => urls.push({ loc: `${base}/index/${i.slug}`, pri: '0.7' }));
-  // Discover feeds
-  urls.push({ loc: base + '/discover', pri: '0.5' });
+  for (const hub of HUBS) urls.push(hub.canonical);
+  urls.push('/app');
+  ['/screeners', '/sectors'].forEach((p) => urls.push(p));
+  THEMES.forEach((t) => urls.push(`/${t.slug}`));
+  SECTORS.forEach((s) => urls.push(`/stocks/sector/${s.slug}`));
+  INDICES.forEach((i) => urls.push(`/index/${i.slug}`));
+  urls.push('/discover');
   ['ipo', 'results', 'candlestick', 'ban', 'insider', 'lotsize', 'global', 'commodities']
-    .forEach((t) => urls.push({ loc: `${base}/discover/${t}`, pri: '0.4' }));
-  // Every stock in the live universe (~2500 pages)
+    .forEach((t) => urls.push(`/discover/${t}`));
   try {
     const list = await universe();
-    list.forEach((s) => urls.push({ loc: `${base}/stocks/${String(s.symbol).toLowerCase()}`, pri: '0.6' }));
+    list.forEach((s) => urls.push(`/stocks/${String(s.symbol).toLowerCase()}`));
   } catch (_) {}
+  return [...new Set(urls)];
+}
+
+async function buildSitemap() {
+  const base = SITE_URL;
+  const paths = await buildSitemapUrlList();
+  const urls = paths.map((p) => {
+    const loc = p.startsWith('http') ? p : base + p;
+    const pri = p === '/' ? '1.0' : (p.startsWith('/stocks/') && !p.includes('/sector/') ? '0.6' : '0.7');
+    return { loc, pri: p === '/' ? '1.0' : (HUBS.some((h) => h.canonical === p) ? '0.8' : pri) };
+  });
 
   const items = urls.map((u) =>
     `  <url><loc>${esc(u.loc)}</loc><changefreq>daily</changefreq><priority>${u.pri}</priority></url>`).join('\n');
@@ -802,4 +808,4 @@ function robotsTxt() {
   return `User-agent: *\nAllow: /\nDisallow: /api/\nDisallow: /shell.html\n\nSitemap: ${SITE_URL}/sitemap.xml\n`;
 }
 
-module.exports = { registerSEOPages, robotsTxt, buildSitemap };
+module.exports = { registerSEOPages, robotsTxt, buildSitemap, buildSitemapUrlList };

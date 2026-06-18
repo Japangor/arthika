@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
-    "build": "echo \"Arthika build complete\" && exit 0"
+    "build": "echo \"Arthika build complete\" && exit 0",
+    "indexnow": "node -e \"require('./indexNow').submitIndexNow().then(r=>console.log(JSON.stringify(r))).catch(e=>{console.error(e);process.exit(1)})\""
   },
   "keywords": ["stocks", "screener", "nse", "markets", "arthika"],
   "author": "GJam Technologies (gjam.in)",

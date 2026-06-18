@@ -8,6 +8,7 @@ const path = require('path');
 const OpenAI = require('openai');
 require('dotenv').config();
 
+const { submitIndexNow } = require('./indexNow');
 const stock = require('./stockData');
 const { registerSEOPages, robotsTxt, buildSitemap } = require('./seoPages');
 const { getNews } = require('./news');
@@ -372,10 +373,28 @@ app.get('/api/ai/insight/:symbol', async (req, res) => {
   }
 });
 
+// --- SEO cron (cron-job.org): IndexNow + sitemap ping ---
+app.get('/api/cron/indexnow', async (req, res) => {
+  const secret = process.env.CRON_SECRET;
+  if (secret) {
+    const auth = req.headers.authorization || '';
+    const qKey = req.query.key || req.query.token;
+    if (auth !== `Bearer ${secret}` && qKey !== secret) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+  }
+  try {
+    const result = await submitIndexNow();
+    res.json({ ok: true, ...result });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
 // --- Sitemap & robots ---
 app.get('/sitemap.xml', async (req, res) => {
   try {
-    const xml = await buildSitemap(req);
+    const xml = await buildSitemap();
     res.type('application/xml').send(xml);
   } catch (e) {
     res.status(500).send('<!-- sitemap error -->');
