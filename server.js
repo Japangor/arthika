@@ -17,6 +17,7 @@ const { registerIapRoutes } = require('./iap');
 
 const app = express();
 const PORT = process.env.PORT || 3010;
+const HOST = process.env.HOST || '0.0.0.0';
 const IS_SERVERLESS = !!process.env.VERCEL;
 
 const nvidiaClient = process.env.NVIDIA_API_KEY
@@ -412,8 +413,8 @@ app.get('*', (req, res, next) => {
 });
 
 if (!IS_SERVERLESS) {
-  app.listen(PORT, () => {
-    console.log(`Arthika running http://localhost:${PORT}`);
+  app.listen(PORT, HOST, () => {
+    console.log(`Arthika running http://${HOST}:${PORT}`);
   });
 }
 
