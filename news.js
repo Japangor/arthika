@@ -37,7 +37,20 @@ function decodeEntities(s = '') {
 }
 
 function stripHtml(s = '') {
-  return decodeEntities(String(s).replace(/<[^>]*>/g, ' ')).replace(/\s+/g, ' ').trim();
+  let t = decodeEntities(String(s).replace(/<[^>]*>/g, ' '));
+  // Google News RSS often truncates mid-tag (<a href="https://…); strip the rest.
+  if (/<|https?:\/\//i.test(t)) {
+    t = t.replace(/<[^>]*/g, ' ').replace(/https?:\/\/\S+/g, ' ');
+  }
+  return t.replace(/\s+/g, ' ').replace(/\s*>+\s*/g, ' ').trim();
+}
+
+/** Drop Google News boilerplate titles like "- Source - Source". */
+function cleanTitle(title = '') {
+  let t = stripHtml(title).replace(/^-\s+/, '').trim();
+  if (!t || t.length < 12) return '';
+  if (/^-\s/.test(title)) return '';
+  return t;
 }
 
 function pick(block, tag) {
@@ -59,7 +72,7 @@ function parseRss(xml, source) {
   const items = [];
   const blocks = xml.match(/<item[\s\S]*?<\/item>/gi) || [];
   for (const b of blocks) {
-    const title = stripHtml(pick(b, 'title'));
+    const title = cleanTitle(pick(b, 'title'));
     let link = decodeEntities(pick(b, 'link')).trim();
     if (!link) {
       const guid = pick(b, 'guid');

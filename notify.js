@@ -180,9 +180,14 @@ async function buildMarketClose() {
   };
 }
 
+function clipPlain(s, max) {
+  const t = String(s || '').replace(/\s+/g, ' ').trim();
+  return t.length > max ? `${t.slice(0, max - 1)}…` : t;
+}
+
 async function buildNews() {
   const items = await getNews(15).catch(() => []);
-  const top = (items || [])[0];
+  const top = (items || []).find((it) => it && it.title && !/^https?:\/\//i.test(it.title));
   if (!top) {
     return {
       title: '📰 Markets & money news',
@@ -192,9 +197,13 @@ async function buildNews() {
       dedupKey: 'news:fallback',
     };
   }
+  const excerpt = clipPlain(top.excerpt, 140);
+  const body = excerpt && !/^https?:\/\//i.test(excerpt)
+    ? `${excerpt} — Tap to read in Arthika.`
+    : `${top.source || 'Markets'} • Tap to read the full story in Arthika.`;
   return {
-    title: `📰 ${top.title}`.slice(0, 90),
-    body: (top.excerpt || `${top.source} • Tap to read more in Arthika.`).slice(0, 170),
+    title: clipPlain(`📰 ${top.title}`, 90),
+    body: clipPlain(body, 170),
     channelId: 'news',
     image: top.image || '',
     data: { screen: 'news', type: 'news', link: top.link || '' },
