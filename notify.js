@@ -14,6 +14,8 @@
  *   GET /api/cron/notify/market-open    Mon–Fri 09:15 IST
  *   GET /api/cron/notify/market-close   Mon–Fri 15:35 IST
  *   GET /api/cron/notify/news           a few times daily (e.g. 08:30,12:30,18:30 IST)
+ *   GET /api/cron/seo-refresh           daily — IndexNow + Google Indexing API
+ *   GET /api/cron/indexnow              legacy IndexNow-only ping
  *   GET /api/cron/notify                discovery (no send)
  * Add ?force=1 to bypass quiet-hours/dedup for manual testing.
  */

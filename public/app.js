@@ -88,7 +88,11 @@ async function render() {
   if (stock) return viewStock(stock[1].toUpperCase());
   const disc = path.match(/^\/discover\/([a-z]+)/i);
   if (disc) return viewFeed(disc[1]);
-  if (path === '/screener' || path === '/stock-screener') return viewScreener('value');
+  if (path === '/screener' || path === '/stock-screener' || path === '/free-stock-screener' || path === '/nse-stock-screener' || path === '/indian-stock-screener' || path === '/online-stock-screener') return viewScreener('value');
+  if (path === '/ai-stock-screener' || path === '/ai-screener' || path === '/ai-stock-screening' || path === '/stock-screener-ai' || path === '/nse-ai-stock-screener') return viewAiScreener();
+  if (path === '/news' || path === '/market-news' || path === '/stock-news') return viewNews();
+  if (path === '/global-markets' || path === '/world-markets' || path === '/global-stock-markets') return viewFeed('global');
+  if (path === '/commodity-prices' || path === '/commodities' || path === '/gold-crude-prices') return viewFeed('commodities');
   if (path === '/intraday-trades' || path === '/intraday') return viewScreener('volume');
   if (path === '/discover') return viewDiscover();
   if (path === '/gainers' || path === '/top-gainers') return viewScreener('gainers');
@@ -232,6 +236,45 @@ async function loadRecommend() {
     el.innerHTML = rows || '<p class="empty">No recommendations.</p>';
     bindGo(el);
   } catch { el.innerHTML = '<p class="empty">Unavailable.</p>'; }
+}
+
+async function viewAiScreener() {
+  app.innerHTML = `<section class="hero">
+    <h1>AI <em>Stock Screener</em></h1>
+    <p class="sub">Screen NSE stocks live, then open any share for AI-powered insights.</p>
+  </section>
+  <div class="panel"><h2>AI Buy Picks</h2><div id="recommend" class="mover-list">${spinner()}</div></div>
+  ${adSlot('ai-screener-mid')}
+  <div class="panel"><h2>Value stocks to screen</h2><div id="ai-value">${spinner()}</div></div>
+  <p class="muted" style="margin-top:1rem">Educational only — not investment advice. <a data-link href="/stock-screener">Open full screener →</a></p>`;
+  bindGo(app);
+  loadTicker();
+  loadRecommend();
+  const el = $('#ai-value');
+  try {
+    const { data } = await api('/api/stocks?filter=value&limit=12');
+    el.innerHTML = (data || []).map(stockRow).join('') || '<p class="empty">No data.</p>';
+    bindGo(el);
+  } catch { el.innerHTML = '<p class="empty">Unavailable.</p>'; }
+}
+
+async function viewNews() {
+  app.innerHTML = `<section class="hero"><h1>Markets <em>News</em></h1>
+    <p class="sub">Indian stocks, IPO, commodities, global markets &amp; fintech headlines.</p></section>
+    ${adSlot('news-top')}
+    <div id="news-list">${spinner()}</div>`;
+  bindGo(app);
+  loadTicker();
+  const el = $('#news-list');
+  try {
+    const { data } = await api('/api/news?limit=40');
+    if (!data?.length) { el.innerHTML = '<p class="empty">No headlines right now.</p>'; return; }
+    el.innerHTML = '<div class="news-feed">' + data.map((n) =>
+      `<a class="news-item" href="${esc(n.link)}" target="_blank" rel="noopener">
+        <div class="news-title">${esc(n.title)}</div>
+        <div class="news-meta">${esc(n.source)}${n.excerpt ? ' · ' + esc(n.excerpt.slice(0, 100)) : ''}</div>
+      </a>`).join('') + '</div>';
+  } catch { el.innerHTML = '<p class="empty">Could not load news.</p>'; }
 }
 async function loadCommodities() {
   const el = $('#commodities');

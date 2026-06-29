@@ -12,11 +12,32 @@ const FEEDS = [
   { source: 'Moneycontrol', url: 'https://www.moneycontrol.com/rss/marketreports.xml' },
   { source: 'Moneycontrol', url: 'https://www.moneycontrol.com/rss/business.xml' },
   { source: 'Economic Times', url: 'https://economictimes.indiatimes.com/markets/rssfeeds/1977021501.cms' },
+  { source: 'Economic Times', url: 'https://economictimes.indiatimes.com/markets/stocks/rssfeeds/2146842.cms' },
   { source: 'Livemint', url: 'https://www.livemint.com/rss/markets' },
   { source: 'Business Standard', url: 'https://www.business-standard.com/rss/markets-106.rss' },
   {
     source: 'Google News',
     url: 'https://news.google.com/rss/search?q=when:2d+(nifty+OR+sensex+OR+%22stock+market%22+India)&hl=en-IN&gl=IN&ceid=IN:en',
+  },
+  {
+    source: 'Google News',
+    url: 'https://news.google.com/rss/search?q=when:3d+(IPO+OR+%22quarterly+results%22+OR+earnings)+India+stock&hl=en-IN&gl=IN&ceid=IN:en',
+  },
+  {
+    source: 'Google News',
+    url: 'https://news.google.com/rss/search?q=when:3d+(gold+OR+crude+OR+commodity+OR+%22crude+oil%22)+price&hl=en-IN&gl=IN&ceid=IN:en',
+  },
+  {
+    source: 'Google News',
+    url: 'https://news.google.com/rss/search?q=when:3d+(global+markets+OR+wall+street+OR+nasdaq+OR+dow+jones)&hl=en-IN&gl=IN&ceid=IN:en',
+  },
+  {
+    source: 'Google News',
+    url: 'https://news.google.com/rss/search?q=when:7d+(%22AI+stock%22+OR+%22stock+screener%22+OR+fintech)+investing&hl=en-IN&gl=IN&ceid=IN:en',
+  },
+  {
+    source: 'Google News',
+    url: 'https://news.google.com/rss/search?q=when:3d+(FII+OR+DII+OR+%22F%26O%22+OR+derivatives)+NSE&hl=en-IN&gl=IN&ceid=IN:en',
   },
 ];
 

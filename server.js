@@ -375,21 +375,64 @@ app.get('/api/ai/insight/:symbol', async (req, res) => {
 });
 
 // --- SEO cron (cron-job.org): IndexNow + sitemap ping ---
-app.get('/api/cron/indexnow', async (req, res) => {
+function cronAuth(req, res) {
   const secret = process.env.CRON_SECRET;
-  if (secret) {
-    const auth = req.headers.authorization || '';
-    const qKey = req.query.key || req.query.token;
-    if (auth !== `Bearer ${secret}` && qKey !== secret) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
-  }
+  if (!secret) return true;
+  const auth = req.headers.authorization || '';
+  const qKey = req.query.key || req.query.token;
+  if (auth === `Bearer ${secret}` || qKey === secret) return true;
+  res.status(401).json({ error: 'Unauthorized' });
+  return false;
+}
+
+app.get('/api/cron/indexnow', async (req, res) => {
+  if (!cronAuth(req, res)) return;
   try {
     const result = await submitIndexNow();
     res.json({ ok: true, ...result });
   } catch (e) {
     res.status(500).json({ ok: false, error: e.message });
   }
+});
+
+// Unified SEO refresh: IndexNow + Bing ping + Google Indexing API (priority URLs)
+app.get('/api/cron/seo-refresh', async (req, res) => {
+  if (!cronAuth(req, res)) return;
+  const includeGoogle = String(req.query.google ?? '1') !== '0';
+  const steps = {};
+  try {
+    let extra = [];
+    try {
+      const stock = require('./stockData');
+      const { gainers, losers } = await stock.getTopGainerLoser();
+      extra = [...(gainers || []), ...(losers || [])]
+        .slice(0, 25)
+        .map((s) => `/stocks/${String(s.symbol || '').toLowerCase()}`);
+    } catch (_) {}
+    steps.indexnow = await submitIndexNow(extra);
+    steps.indexnow.ok = true;
+  } catch (e) {
+    steps.indexnow = { ok: false, error: e.message };
+  }
+  if (includeGoogle) {
+    try {
+      const { submitGoogleIndexing } = require('./scripts/submit_google_indexing');
+      steps.googleIndexing = await submitGoogleIndexing();
+    } catch (e) {
+      steps.googleIndexing = { ok: false, error: e.message };
+    }
+  } else {
+    steps.googleIndexing = { ok: true, skipped: true };
+  }
+  try {
+    const { buildSitemapUrlList } = require('./seoPages');
+    const { paths } = await buildSitemapUrlList();
+    steps.sitemap = { ok: true, urls: paths.length };
+  } catch (e) {
+    steps.sitemap = { ok: false, error: e.message };
+  }
+  const ok = Object.values(steps).every((s) => s.ok !== false);
+  res.json({ ok, service: 'arthika', steps, ts: Date.now() });
 });
 
 // --- Sitemap & robots ---

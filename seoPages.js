@@ -60,7 +60,29 @@ function orgLd() {
     '@type': 'Organization',
     name: BRAND,
     url: SITE_URL + '/',
-    description: 'Live NSE stock screener, intraday trades and AI market insights.',
+    description: 'Free AI stock screener for NSE India — live prices, screeners, global markets and AI insights.',
+  };
+}
+function webAppLd() {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'WebApplication',
+    name: 'Arthika AI Stock Screener',
+    alternateName: ['Arthika Stock Screener', 'NSE AI Screener'],
+    applicationCategory: 'FinanceApplication',
+    operatingSystem: 'Web',
+    browserRequirements: 'Requires JavaScript',
+    url: SITE_URL + '/ai-stock-screener',
+    description:
+      'Free AI-powered NSE stock screener with live prices, value/dividend/momentum filters and Llama-powered stock insights for Indian equities.',
+    offers: { '@type': 'Offer', price: '0', priceCurrency: 'INR' },
+    featureList: [
+      'AI stock screening',
+      'Live NSE prices',
+      'Top gainers and losers',
+      'IPO and results calendar',
+      'Global markets and commodities',
+    ],
   };
 }
 function appLd() {
@@ -138,21 +160,67 @@ function faqHtml(faqs) {
   return '<h2>Frequently asked questions</h2>' + faqs.map((f) =>
     `<h3>${esc(f.q)}</h3><p>${esc(f.a)}</p>`).join('');
 }
+function globalTableHtml(items, limit = 40) {
+  const rows = (items || []).slice(0, limit).map((r) => `<tr>
+    <td><strong>${esc(r.symbol_name || r.name)}</strong> <span class="muted">${esc(r.region || '')}</span></td>
+    <td>${fmt(r.last_trade_price ?? r.close)}</td>
+    <td>${fmt(r.change_percent)}%</td>
+    <td>${fmt(r.high52)}</td>
+    <td>${fmt(r.low52)}</td>
+  </tr>`).join('');
+  if (!rows) return '';
+  return `<table><thead><tr><th>Index / Market</th><th>LTP</th><th>Change %</th><th>52W High</th><th>52W Low</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+function commoditiesTableHtml(data, limit = 30) {
+  const list = []
+    .concat((data?.commodities || []).map((c) => ({ ...c, kind: 'Commodity' })))
+    .concat((data?.currencies || []).map((c) => ({ ...c, kind: 'FX' })));
+  const rows = list.slice(0, limit).map((r) => `<tr>
+    <td><strong>${esc(r.symbol_name || r.name)}</strong> <span class="muted">${esc(r.kind)}</span></td>
+    <td>${fmt(r.last_trade_price ?? r.close)}</td>
+    <td>${fmt(r.change_percent)}%</td>
+  </tr>`).join('');
+  if (!rows) return '';
+  return `<table><thead><tr><th>Commodity / Currency</th><th>Price</th><th>Change %</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+function newsListHtml(items, limit = 25) {
+  const rows = (items || []).slice(0, limit).map((n) =>
+    `<li><a href="${esc(n.link)}" rel="noopener noreferrer">${esc(n.title)}</a> <span class="muted">— ${esc(n.source)}</span></li>`).join('');
+  if (!rows) return '';
+  return `<ul class="news-list">${rows}</ul>`;
+}
+function recommendTableHtml(recs, limit = 20) {
+  const rows = (recs || []).slice(0, limit).map((r) => {
+    const sym = esc(String(r.symbol_name || r.symbol || '').toLowerCase());
+    return `<tr>
+      <td><a href="/stocks/${sym}">${esc(r.symbol_name || r.symbol)} — ${esc(r.company_name || '')}</a></td>
+      <td>₹${fmt(r.ltp ?? r.last_trade_price)}</td>
+      <td>${fmt(r.change_percent)}%</td>
+    </tr>`;
+  }).join('');
+  if (!rows) return '';
+  return `<table><thead><tr><th>Stock</th><th>Price</th><th>Change %</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
 function relatedNav() {
   const themes = THEMES.slice(0, 8)
     .map((t) => `<li><a href="/${t.slug}">${esc(t.linkText)}</a></li>`).join('');
   const sectors = SECTORS.slice(0, 8)
     .map((s) => `<li><a href="/stocks/sector/${s.slug}">${esc(s.linkText)}</a></li>`).join('');
   return `<nav aria-label="Explore"><h2>Explore Arthika</h2><ul>
+    <li><a href="/ai-stock-screener">AI Stock Screener</a></li>
+    <li><a href="/stock-screener">Free Stock Screener — NSE</a></li>
     <li><a href="/app">Download the Arthika Android App</a></li>
-    <li><a href="/stock-screener">Live Stock Screener</a></li>
+    <li><a href="/news">Markets &amp; Stocks News</a></li>
     <li><a href="/intraday-trades">Intraday Trades Today</a></li>
     <li><a href="/top-gainers">Top Gainers Today</a></li>
     <li><a href="/top-losers">Top Losers Today</a></li>
+    <li><a href="/global-markets">Global Markets Today</a></li>
+    <li><a href="/commodity-prices">Commodity Prices &amp; FX</a></li>
     <li><a href="/ipo">IPO Calendar</a></li>
     <li><a href="/results-calendar">Results Calendar</a></li>
     <li><a href="/fno-ban-list">F&amp;O Ban List</a></li>
     <li><a href="/stocks">NSE Stock List</a></li>
+    <li><a href="/discover">Discover — IPO, Insider, Patterns</a></li>
   </ul>
   <h2>Popular stock screens</h2><ul>${themes}</ul>
   <h2>Stocks by sector</h2><ul>${sectors}
@@ -194,29 +262,54 @@ const HUBS = [
     path: '/',
     canonical: '/',
     crumb: [{ name: 'Home', path: '/' }],
-    title: 'Live Stock Screener, Intraday Trades & NSE Market Today | Arthika',
-    desc: 'Free live NSE stock screener with intraday trades, top gainers & losers, IPO and results calendar, F&O ban list and AI insights. Real-time Indian stock market data.',
-    h1: 'Live Stock Screener & Intraday Market Today',
-    intro: 'Screen the entire NSE universe in real time — filter stocks by price, valuation, volume and dividend yield, track live intraday trades, top gainers and losers, IPOs, quarterly results and the F&O ban list, with AI-powered insights on every stock. All data is live from NSE feeds.',
+    title: 'AI Stock Screener & Live NSE Market Today — Free Stock Screener India | Arthika',
+    desc: 'Free AI stock screener for NSE India — screen 2000+ stocks by P/E, dividend, volume and momentum. Live intraday trades, top gainers & losers, global markets, commodities and AI insights.',
+    h1: 'AI Stock Screener & Live NSE Market Today',
+    intro: 'Arthika is a free AI stock screener for Indian markets — screen the entire NSE universe in real time by price, valuation, volume and dividend yield. Track intraday trades, top gainers and losers, IPOs, quarterly results, global indices, commodity prices and AI-powered insights on every stock.',
     section: async () => {
       const { gainers, losers } = await stock.getTopGainerLoser();
       return `<h2>Top gainers right now</h2>${stockTableHtml(gainers, 10)}` +
         `<h2>Top losers right now</h2>${stockTableHtml(losers, 10)}`;
     },
     faq: [
+      { q: 'What is an AI stock screener?', a: 'An AI stock screener combines live market filters (P/E, dividend yield, volume, market cap) with AI-generated insights on each stock, helping you shortlist NSE shares faster than a manual spreadsheet.' },
       { q: 'What is a live stock screener?', a: 'A live stock screener lets you filter NSE-listed stocks in real time by metrics like price, P/E ratio, market cap, volume and dividend yield, so you can quickly find intraday and investment opportunities.' },
-      { q: 'Is Arthika free to use?', a: 'Yes. Arthika offers a free live stock screener, intraday movers, IPO and results calendars and AI insights. It is for educational purposes only and not investment advice.' },
+      { q: 'Is Arthika free to use?', a: 'Yes. Arthika offers a free AI stock screener, intraday movers, IPO and results calendars and AI insights. It is for educational purposes only and not investment advice.' },
       { q: 'Where does the market data come from?', a: 'Prices, gainers, losers and fundamentals are sourced from live NSE feeds and may be delayed. Always confirm on the exchange before trading.' },
     ],
   },
   {
+    path: '/ai-stock-screener',
+    aliases: ['/ai-screener', '/ai-stock-screening', '/stock-screener-ai', '/nse-ai-stock-screener'],
+    canonical: '/ai-stock-screener',
+    crumb: [{ name: 'Home', path: '/' }, { name: 'AI Stock Screener', path: '/ai-stock-screener' }],
+    title: 'AI Stock Screener India 2026 — Free NSE AI Screener with Live Prices | Arthika',
+    desc: 'Best free AI stock screener for NSE India. Screen stocks by P/E, dividend, volume and momentum, then get AI-powered insights on every share. Live prices, buy signals and market movers.',
+    h1: 'AI Stock Screener for NSE India',
+    intro: 'Screen 2000+ NSE stocks with live filters, then open any share for an AI-generated read on valuation, risks and what to watch. Arthika combines a powerful stock screener with Llama-powered equity insights — free on web and Android.',
+    section: async () => {
+      const [recs, list] = await Promise.all([
+        stock.getRecommendations().catch(() => ({ buy: [] })),
+        stock.getScreenerList({ filter: 'value', limit: 15 }).catch(() => []),
+      ]);
+      return `<h2>AI buy recommendations today</h2>${recommendTableHtml(recs.buy, 15)}` +
+        `<h2>Value stocks for AI screening</h2>${stockTableHtml(list, 15)}`;
+    },
+    faq: [
+      { q: 'What is the best AI stock screener in India?', a: 'Arthika is a free AI stock screener for NSE that filters live by P/E, dividend yield, volume and cap category, then provides AI insights on individual stocks. It is for education, not investment advice.' },
+      { q: 'How does AI stock screening work?', a: 'You apply filters (value, dividend, momentum, large-cap) to the live NSE universe, shortlist candidates, then use AI insight on each stock for a plain-English summary of valuation and risks.' },
+      { q: 'Is the Arthika AI stock screener free?', a: 'Yes. The web AI stock screener is free. The Android app includes free screening and capped AI insights; Pro unlocks unlimited AI reads.' },
+    ],
+    webApp: true,
+  },
+  {
     path: '/stock-screener',
-    aliases: ['/screener'],
+    aliases: ['/screener', '/free-stock-screener', '/nse-stock-screener', '/indian-stock-screener', '/online-stock-screener'],
     canonical: '/stock-screener',
     crumb: [{ name: 'Home', path: '/' }, { name: 'Stock Screener', path: '/stock-screener' }],
-    title: 'Live Stock Screener — Screen NSE Stocks by Price, P/E, Volume & Dividend | Arthika',
-    desc: 'Free live stock screener for NSE India. Filter stocks by price, P/E, market cap, volume, dividend yield and momentum. Find value, large-cap and high-dividend stocks in real time.',
-    h1: 'Live Stock Screener for NSE India',
+    title: 'Free Stock Screener India — Screen NSE Stocks by P/E, Volume & Dividend | Arthika',
+    desc: 'Free stock screener for NSE India. Filter 2000+ stocks by price, P/E, market cap, volume, dividend yield and momentum. Best online stock screener with live data and AI insights.',
+    h1: 'Free Stock Screener for NSE India',
     intro: 'Screen 2000+ NSE-listed stocks in real time. Filter by value (low P/E), high dividend yield, high volume, large-cap and intraday momentum, then sort by market cap, price or change percentage to build your watchlist.',
     section: async () => {
       const list = await stock.getScreenerList({ filter: 'value', limit: 30 });
@@ -357,6 +450,61 @@ const HUBS = [
     },
     faq: [
       { q: 'How many stocks can I screen on Arthika?', a: 'Arthika covers 2000+ NSE-listed stocks with live prices and key fundamentals, all searchable and filterable.' },
+    ],
+  },
+  {
+    path: '/global-markets',
+    aliases: ['/discover/global', '/world-markets', '/global-stock-markets'],
+    canonical: '/global-markets',
+    crumb: [{ name: 'Home', path: '/' }, { name: 'Global Markets', path: '/global-markets' }],
+    title: 'Global Markets Today — World Indices, US, Europe & Asia Live | Arthika',
+    desc: 'Global stock markets today — live world indices, US Dow & Nasdaq, Europe, Asia and bond yields. Track international markets alongside NSE India on Arthika.',
+    h1: 'Global Markets Today — World Indices Live',
+    intro: 'Track global stock markets alongside NSE — US indices, European bourses, Asian markets and bond yields updating live. Use global market moves to contextualise Indian equities and sector rotation.',
+    section: async () => {
+      const data = await stock.getGlobalMarket();
+      return globalTableHtml(data, 40);
+    },
+    faq: [
+      { q: 'How do global markets affect Indian stocks?', a: 'Overnight moves in US and Asian indices often set the tone for NSE opening. FIIs also react to global risk sentiment — watch both on Arthika before the Indian session.' },
+      { q: 'Which global indices can I track on Arthika?', a: 'Arthika shows major world indices and bond benchmarks with live last price, change % and 52-week range.' },
+    ],
+  },
+  {
+    path: '/commodity-prices',
+    aliases: ['/discover/commodities', '/commodities', '/gold-crude-prices'],
+    canonical: '/commodity-prices',
+    crumb: [{ name: 'Home', path: '/' }, { name: 'Commodity Prices', path: '/commodity-prices' }],
+    title: 'Commodity Prices Today — Gold, Silver, Crude Oil & USD/INR Live | Arthika',
+    desc: 'Live commodity prices today — gold, silver, crude oil, natural gas and major currency pairs. Track commodities and FX that move Indian energy, metal and rupee stocks.',
+    h1: 'Commodity Prices & Currencies Today',
+    intro: 'Live commodity and currency prices — gold, silver, crude, gas and USD/INR among others. Energy and metal commodities directly impact NSE sectors like oil & gas, metals and FMCG input costs.',
+    section: async () => {
+      const data = await stock.getCommodities();
+      return commoditiesTableHtml(data, 35);
+    },
+    faq: [
+      { q: 'Why track commodity prices for stock investing?', a: 'Crude and metal prices affect margins for energy, paint, airline and metal stocks. Gold and USD/INR influence safe-haven flows and import-heavy sectors.' },
+      { q: 'Are commodity prices live on Arthika?', a: 'Commodity and FX quotes refresh regularly from market data feeds. Confirm exact levels before trading derivatives or commodities.' },
+    ],
+  },
+  {
+    path: '/news',
+    aliases: ['/market-news', '/stock-news'],
+    canonical: '/news',
+    crumb: [{ name: 'Home', path: '/' }, { name: 'News', path: '/news' }],
+    title: 'Stock Market News India Today — NSE, IPO, Commodities & Global Headlines | Arthika',
+    desc: 'Latest Indian stock market news — Nifty, Sensex, IPO, earnings, commodities, global markets and AI investing headlines aggregated from top finance sources.',
+    h1: 'Stock Market News India Today',
+    intro: 'Latest headlines on Indian equities, IPOs, earnings, commodities, global markets and fintech — aggregated from Moneycontrol, Economic Times, Livemint and more. Updated throughout the trading day.',
+    section: async () => {
+      const { getNews } = require('./news');
+      const items = await getNews(30);
+      return newsListHtml(items, 30);
+    },
+    faq: [
+      { q: 'Where does Arthika get stock market news?', a: 'Headlines are aggregated from public RSS feeds including Moneycontrol, Economic Times, Livemint, Business Standard and Google News finance queries.' },
+      { q: 'Is market news updated live?', a: 'News refreshes every few minutes during market hours. Open any headline to read the full story on the original publisher site.' },
     ],
   },
 ];
@@ -553,7 +701,8 @@ function buildHub(hub) {
     } catch (_) {}
     const canonical = SITE_URL + hub.canonical;
     const jsonLd = [websiteLd(), orgLd(), breadcrumbLd(hub.crumb)];
-    if (hub.path === '/') jsonLd.push(appLd());
+    if (hub.path === '/') jsonLd.push(appLd(), webAppLd());
+    if (hub.webApp) jsonLd.push(webAppLd());
     if (hub.faq) jsonLd.push(faqLd(hub.faq));
     if (listForLd.length) jsonLd.push(itemListLd(listForLd, hub.h1));
     const bodyHtml = `<h1>${esc(hub.h1)}</h1><p>${esc(hub.intro)}</p>${section}${faqHtml(hub.faq)}`;
@@ -640,12 +789,12 @@ function registerSEOPages(app) {
       `<li><a href="/${t.slug}">${esc(t.h1)}</a> — ${esc(t.linkText)}</li>`).join('');
     renderDirectory(res, {
       canonical: '/screeners',
-      title: 'Stock Screeners — High Dividend, Value, Large/Mid/Small Cap, Penny & More | Arthika',
-      desc: 'All Arthika stock screeners for NSE India: high dividend stocks, undervalued low-P/E value stocks, large/mid/small cap lists, most active and penny stocks — updated live.',
-      h1: 'NSE Stock Screeners',
+      title: 'Stock Screeners India — AI, High Dividend, Value, Large/Mid/Small Cap | Arthika',
+      desc: 'All Arthika stock screeners for NSE India: AI stock screener, high dividend, undervalued low-P/E value stocks, large/mid/small cap, most active and penny stocks — live.',
+      h1: 'NSE Stock Screeners — Including AI Screener',
       crumb: [{ name: 'Home', path: '/' }, { name: 'Screeners', path: '/screeners' }],
-      intro: 'Browse every live stock screen on Arthika. Each screen filters the full NSE universe in real time so you can find dividend, value, large-cap, mid-cap, small-cap, high-volume and penny stocks instantly.',
-      listHtml: `<ul>${cards}</ul>`,
+      intro: 'Browse every live stock screen on Arthika — start with the AI stock screener, then filter for dividend, value, large-cap, mid-cap, small-cap, high-volume and penny stocks across the full NSE universe.',
+      listHtml: `<p><a href="/ai-stock-screener"><strong>AI Stock Screener →</strong></a></p><ul>${cards}</ul>`,
     });
   });
 
@@ -663,6 +812,128 @@ function registerSEOPages(app) {
       intro: 'Browse NSE stocks grouped by sector and by index. Each page lists the leading constituents with live prices, valuations and dividend yields so you can compare companies within a theme.',
       listHtml: `<h2>By sector</h2><ul>${secCards}</ul><h2>By index</h2><ul>${idxCards}</ul>`,
     });
+  });
+
+  /* ---- Discover hub + sub-pages (SSR for crawlers) ---- */
+  app.get('/discover', (req, res) => {
+    const cards = [
+      ['ipo', 'IPO Calendar', '/ipo'],
+      ['results', 'Results Calendar', '/results-calendar'],
+      ['candlestick', 'Candlestick Scans', '/discover/candlestick'],
+      ['ban', 'F&O Ban List', '/fno-ban-list'],
+      ['insider', 'Insider Trades', '/discover/insider'],
+      ['lotsize', 'F&O Lot Sizes', '/discover/lotsize'],
+      ['global', 'Global Markets', '/global-markets'],
+      ['commodities', 'Commodities & FX', '/commodity-prices'],
+    ].map(([slug, label, href]) => `<li><a href="${href}">${esc(label)}</a></li>`).join('');
+    renderDirectory(res, {
+      canonical: '/discover',
+      title: 'Discover Markets — IPO, Results, Insider Trades, Global & Commodities | Arthika',
+      desc: 'Discover Indian stock market tools — IPO calendar, earnings dates, F&O ban list, insider trades, candlestick patterns, global indices and commodity prices.',
+      h1: 'Discover — IPO, Results, Insider & Global Markets',
+      crumb: [{ name: 'Home', path: '/' }, { name: 'Discover', path: '/discover' }],
+      intro: 'Explore IPOs, quarterly results, derivatives ban list, promoter insider activity, candlestick pattern scans, world indices and commodity prices — all with live data on Arthika.',
+      listHtml: `<ul>${cards}</ul>`,
+    });
+  });
+
+  const discoverAlias = {
+    ipo: HUBS.find((h) => h.path === '/ipo'),
+    results: HUBS.find((h) => h.path === '/results-calendar'),
+    ban: HUBS.find((h) => h.path === '/fno-ban-list'),
+    global: HUBS.find((h) => h.path === '/global-markets'),
+    commodities: HUBS.find((h) => h.path === '/commodity-prices'),
+  };
+  for (const [slug, hub] of Object.entries(discoverAlias)) {
+    if (!hub) continue;
+    app.get(`/discover/${slug}`, buildHub(hub));
+  }
+
+  app.get('/discover/candlestick', async (req, res) => {
+    let rows = [];
+    try {
+      rows = await stock.getCandlestickPatterns('day');
+    } catch (_) {}
+    const table = (rows || []).slice(0, 40).map((r) => `<tr>
+      <td><a href="/stocks/${esc(String(r.symbol || '').toLowerCase())}">${esc(r.symbol)}</a></td>
+      <td>${esc(r.pattern)}</td><td>${esc(r.sentiment)}</td><td>${esc(r.date || '')}</td></tr>`).join('');
+    const section = table
+      ? `<table><thead><tr><th>Stock</th><th>Pattern</th><th>Sentiment</th><th>Date</th></tr></thead><tbody>${table}</tbody></table>`
+      : '<p>Pattern scan data is updating — refresh shortly.</p>';
+    const faq = [
+      { q: 'What are candlestick pattern scans?', a: 'Candlestick scans flag daily bullish or bearish chart patterns (hammer, engulfing, doji, etc.) across NSE stocks to help technical traders spot setups.' },
+    ];
+    const jsonLd = [websiteLd(), orgLd(), breadcrumbLd([
+      { name: 'Home', path: '/' }, { name: 'Discover', path: '/discover' }, { name: 'Candlestick Scans', path: '/discover/candlestick' },
+    ]), faqLd(faq)];
+    const bodyHtml = `<h1>Candlestick Pattern Scans — NSE Today</h1>
+      <p>Daily bullish and bearish candlestick patterns across NSE stocks — useful for swing and intraday technical analysis alongside the Arthika stock screener.</p>${section}${faqHtml(faq)}`;
+    res.type('html').send(injectSEO(readIndex(), {
+      title: 'Candlestick Pattern Scanner — Bullish & Bearish NSE Stocks Today | Arthika',
+      description: 'Live candlestick pattern scans for NSE stocks — daily bullish and bearish setups for technical traders. Free with Arthika stock screener.',
+      canonical: SITE_URL + '/discover/candlestick',
+      jsonLd,
+      bodyHtml,
+    }));
+  });
+
+  app.get('/discover/insider', async (req, res) => {
+    let rows = [];
+    try {
+      const d = await stock.getInsiderTrades();
+      rows = d.data || [];
+    } catch (_) {}
+    const table = (rows || []).slice(0, 35).map((r) => `<tr>
+      <td>${esc(r.symbol_name)} — ${esc(r.company_name || '')}</td>
+      <td>${esc(r.acquirer)}</td><td>${fmt(r.no_of_securities, 0)}</td>
+      <td>${esc(r.acquisition_disposal)}</td><td>${esc(r.date || '')}</td></tr>`).join('');
+    const section = table
+      ? `<table><thead><tr><th>Company</th><th>Acquirer</th><th>Qty</th><th>Type</th><th>Date</th></tr></thead><tbody>${table}</tbody></table>`
+      : '<p>Insider trade data is updating.</p>';
+    const faq = [
+      { q: 'What are insider trades?', a: 'Insider trades are share purchases or sales by promoters, directors and key management disclosed to stock exchanges. They can signal confidence or concern.' },
+    ];
+    const bodyHtml = `<h1>Insider Trades Today — NSE Promoter Activity</h1>
+      <p>Track promoter and insider buying and selling across NSE-listed companies — a smart-money signal to combine with the stock screener and AI insights.</p>${section}${faqHtml(faq)}`;
+    res.type('html').send(injectSEO(readIndex(), {
+      title: 'Insider Trades Today — NSE Promoter Buying & Selling | Arthika',
+      description: 'Live NSE insider and promoter trades — quantities, acquirers and buy/sell type. Track smart money alongside your stock screener.',
+      canonical: SITE_URL + '/discover/insider',
+      jsonLd: [websiteLd(), orgLd(), breadcrumbLd([
+        { name: 'Home', path: '/' }, { name: 'Discover', path: '/discover' }, { name: 'Insider Trades', path: '/discover/insider' },
+      ]), faqLd(faq)],
+      bodyHtml,
+    }));
+  });
+
+  app.get('/discover/lotsize', async (req, res) => {
+    let rows = [];
+    try {
+      rows = await stock.getFnoLotSize();
+    } catch (_) {}
+    const table = (rows || []).slice(0, 40).map((r) => {
+      let lot = '—';
+      try { const md = JSON.parse(r.month_data || '{}'); lot = Object.values(md)[0] || '—'; } catch (_) {}
+      return `<tr><td>${esc(r.underlying)}</td><td><a href="/stocks/${esc(String(r.symbol || '').toLowerCase())}">${esc(r.symbol)}</a></td>
+        <td>${esc(String(lot))}</td><td>₹${fmt(r.last_trade_price)}</td></tr>`;
+    }).join('');
+    const section = table
+      ? `<table><thead><tr><th>Underlying</th><th>Symbol</th><th>Lot Size</th><th>LTP</th></tr></thead><tbody>${table}</tbody></table>`
+      : '<p>F&O lot size data is updating.</p>';
+    const faq = [
+      { q: 'What is F&O lot size?', a: 'Lot size is the minimum number of shares (or units) per futures or options contract on NSE. It changes when exchanges revise contract specifications.' },
+    ];
+    const bodyHtml = `<h1>F&O Lot Sizes — NSE Derivatives Contract Sizes</h1>
+      <p>Current NSE F&O lot sizes for index and stock derivatives — essential for position sizing alongside the F&O ban list and stock screener.</p>${section}${faqHtml(faq)}`;
+    res.type('html').send(injectSEO(readIndex(), {
+      title: 'F&O Lot Size List NSE Today — Derivatives Contract Sizes | Arthika',
+      description: 'NSE F&O lot sizes for stock and index derivatives — current contract sizes with live underlying prices.',
+      canonical: SITE_URL + '/discover/lotsize',
+      jsonLd: [websiteLd(), orgLd(), breadcrumbLd([
+        { name: 'Home', path: '/' }, { name: 'Discover', path: '/discover' }, { name: 'F&O Lot Sizes', path: '/discover/lotsize' },
+      ]), faqLd(faq)],
+      bodyHtml,
+    }));
   });
 
   /* ---- App download / install landing page ---- */
@@ -721,12 +992,13 @@ function registerSEOPages(app) {
       const ret = returns.stock_return || {};
       const lower = sym.toLowerCase();
       const canonical = `${SITE_URL}/stocks/${lower}`;
-      const title = `${name} Share Price Today — NSE:${sym} Live Price, P/E & Analysis | Arthika`;
-      const desc = `${name} (NSE: ${sym}) live share price ₹${fmt(ltp)}, ${fmt(chg)}% today. P/E ${fmt(q.pe)}, market cap ₹${fmt(q.market_cap, 0)} Cr, dividend yield ${q.dividend_yield ? fmt(q.dividend_yield) + '%' : '—'}. Fundamentals, technicals, shareholding & AI insight.`;
+      const title = `${name} Stock Analysis & Share Price Today — NSE:${sym} Live | Arthika`;
+      const desc = `${name} (NSE: ${sym}) live share price ₹${fmt(ltp)}, ${fmt(chg)}% today. P/E ${fmt(q.pe)}, market cap ₹${fmt(q.market_cap, 0)} Cr. ${name} stock screener data, fundamentals, AI insight & peer comparison — not investment advice.`;
 
       const faqs = [
         { q: `What is the share price of ${name} today?`, a: `${name} (NSE: ${sym}) is trading around ₹${fmt(ltp)}, ${fmt(chg)}% on the day.` },
         { q: `What is the P/E ratio of ${name}?`, a: `${name} has a P/E ratio of ${fmt(q.pe)} with a market capitalisation of ₹${fmt(q.market_cap, 0)} crore.` },
+        { q: `Is ${name} a good stock to buy?`, a: `Arthika shows a ${overview.recommendation || 'hold'} signal for ${name} based on market data. Use the AI insight and screener filters — this is not investment advice.` },
         { q: `What is the dividend yield of ${name}?`, a: `${name} has a dividend yield of ${q.dividend_yield ? fmt(q.dividend_yield) + '%' : 'not available'}.` },
         { q: `How has ${sym} performed recently?`, a: `Returns for ${sym}: 1 day ${fmt(ret.return_1d)}%, 1 week ${fmt(ret.return_5d)}%, 1 month ${fmt(ret.return_1m)}%, 1 year ${fmt(ret.return_1y)}%.` },
       ];
@@ -772,31 +1044,43 @@ function registerSEOPages(app) {
 }
 
 async function buildSitemapUrlList() {
-  const base = SITE_URL;
   const urls = [];
-  for (const hub of HUBS) urls.push(hub.canonical);
+  const HIGH = new Set(['/', '/ai-stock-screener', '/stock-screener', '/news', '/global-markets', '/commodity-prices']);
+  for (const hub of HUBS) {
+    urls.push(hub.canonical);
+    for (const a of hub.aliases || []) urls.push(a);
+  }
   urls.push('/app');
-  ['/screeners', '/sectors'].forEach((p) => urls.push(p));
-  THEMES.forEach((t) => urls.push(`/${t.slug}`));
+  ['/screeners', '/sectors', '/discover'].forEach((p) => urls.push(p));
+  THEMES.forEach((t) => {
+    urls.push(`/${t.slug}`);
+    for (const a of t.aliases || []) urls.push(`/${a}`);
+  });
   SECTORS.forEach((s) => urls.push(`/stocks/sector/${s.slug}`));
   INDICES.forEach((i) => urls.push(`/index/${i.slug}`));
-  urls.push('/discover');
   ['ipo', 'results', 'candlestick', 'ban', 'insider', 'lotsize', 'global', 'commodities']
     .forEach((t) => urls.push(`/discover/${t}`));
   try {
     const list = await universe();
     list.forEach((s) => urls.push(`/stocks/${String(s.symbol).toLowerCase()}`));
   } catch (_) {}
-  return [...new Set(urls)];
+  return { paths: [...new Set(urls)], high: HIGH };
 }
 
 async function buildSitemap() {
   const base = SITE_URL;
-  const paths = await buildSitemapUrlList();
+  const { paths, high } = await buildSitemapUrlList();
+  const hubCanon = new Set(HUBS.map((h) => h.canonical));
   const urls = paths.map((p) => {
     const loc = p.startsWith('http') ? p : base + p;
-    const pri = p === '/' ? '1.0' : (p.startsWith('/stocks/') && !p.includes('/sector/') ? '0.6' : '0.7');
-    return { loc, pri: p === '/' ? '1.0' : (HUBS.some((h) => h.canonical === p) ? '0.8' : pri) };
+    let pri = '0.6';
+    if (p === '/') pri = '1.0';
+    else if (high.has(p)) pri = '0.95';
+    else if (hubCanon.has(p)) pri = '0.85';
+    else if (p.startsWith('/stocks/') && !p.includes('/sector/')) pri = '0.55';
+    else if (p.startsWith('/discover/')) pri = '0.75';
+    else pri = '0.7';
+    return { loc, pri };
   });
 
   const items = urls.map((u) =>

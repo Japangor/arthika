@@ -219,6 +219,15 @@ table.data tbody tr:hover { background: var(--surface2); }
 .hidden { display: none !important; }
 #seo-content { display: none; }
 
+.news-feed { display: flex; flex-direction: column; gap: 0.65rem; }
+.news-item {
+  display: block; padding: 0.85rem 1rem; border-radius: 12px;
+  border: 1px solid var(--border); background: var(--panel); text-decoration: none; color: inherit;
+}
+.news-item:hover { border-color: var(--accent); }
+.news-title { font-weight: 600; font-size: 0.95rem; line-height: 1.35; margin-bottom: 0.25rem; }
+.news-meta { font-size: 0.78rem; color: var(--muted); line-height: 1.4; }
+
 /* Ad slots */
 .mkt-slot { display: block; margin: 1.25rem auto; max-width: 1180px; text-align: center; min-height: 1px; overflow: hidden; }
 .mkt-slot--banner { margin: 0.75rem auto; padding: 0 1.25rem; }

@@ -9,20 +9,41 @@ const HOST = SITE_URL.replace(/^https?:\/\//, '');
 const HUB_PATHS = [
   '/',
   '/app',
+  '/ai-stock-screener',
+  '/ai-screener',
   '/stock-screener',
+  '/free-stock-screener',
+  '/nse-stock-screener',
   '/top-gainers',
   '/top-losers',
   '/intraday-trades',
+  '/global-markets',
+  '/commodity-prices',
+  '/news',
   '/screeners',
   '/sectors',
   '/discover',
   '/discover/ipo',
   '/discover/results',
-  '/nifty-50',
-  '/bank-nifty',
-  '/stocks/sector/it',
-  '/stocks/sector/banking',
+  '/discover/candlestick',
+  '/discover/ban',
+  '/discover/insider',
+  '/discover/lotsize',
+  '/discover/global',
+  '/discover/commodities',
+  '/ipo',
+  '/results-calendar',
+  '/fno-ban-list',
+  '/stocks',
   '/index/nifty-50',
+  '/index/nifty-bank',
+  '/index/nifty-it',
+  '/stocks/sector/it',
+  '/stocks/sector/bank',
+  '/stocks/sector/pharma',
+  '/high-dividend-stocks',
+  '/value-stocks',
+  '/large-cap-stocks',
 ];
 
 async function postJson(url, body) {
@@ -61,4 +82,4 @@ async function submitIndexNow(extraPaths = []) {
   return { submitted: urlList.length, host: HOST, results };
 }
 
-module.exports = { submitIndexNow, INDEXNOW_KEY };
+module.exports = { submitIndexNow, INDEXNOW_KEY, HUB_PATHS };
