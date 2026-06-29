@@ -74,7 +74,8 @@ async function submitIndexNow(extraPaths = []) {
   const sitemap = encodeURIComponent(`${SITE_URL}/sitemap.xml`);
   try {
     const b = await fetch(`https://www.bing.com/ping?sitemap=${sitemap}`);
-    results.bingPing = { ok: b.ok, status: b.status };
+    // Bing retired this endpoint (HTTP 410); IndexNow above is the supported path.
+    results.bingPing = { ok: b.ok, status: b.status, deprecated: b.status === 410 };
   } catch (e) {
     results.bingPing = { ok: false, error: e.message };
   }

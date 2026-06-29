@@ -1,6 +1,12 @@
 /**
  * Submit priority arthika.rail24.in URLs to the Google Indexing API.
  *
+ * Credentials (first match wins):
+ *   GOOGLE_INDEXING_KEY_B64  — base64-encoded service-account JSON (set on Vercel)
+ *   GOOGLE_INDEXING_KEY      — path to JSON file, or raw JSON string
+ *   ~/.config/gcloud/gjam-gsc-mcp.json
+ *   ./google-indexing-key.json in repo root (local dev only)
+ *
  * Usage:
  *   node scripts/submit_google_indexing.js
  *   node scripts/submit_google_indexing.js /ai-stock-screener /news
@@ -11,9 +17,6 @@ const path = require('path');
 
 const HOST = (process.env.SITE_URL || 'https://arthika.rail24.in').replace(/\/$/, '');
 const CAP = Number(process.env.GOOGLE_INDEXING_CAP || 180);
-const RAIL24_SA = path.join(process.env.HOME || '', '.config/gcloud/gjam-gsc-mcp.json');
-const REPO_KEY = path.join(__dirname, '../../../railwayengine/google-indexing-key.json');
-const KEY = process.env.GOOGLE_INDEXING_KEY || (fs.existsSync(RAIL24_SA) ? RAIL24_SA : REPO_KEY);
 
 const PRIORITY = [
   '/',
@@ -51,6 +54,68 @@ const PRIORITY = [
   '/stocks/sector/pharma',
 ];
 
+let _creds;
+
+function resolveIndexingCredentials() {
+  if (_creds !== undefined) return _creds;
+  _creds = null;
+
+  const b64 = process.env.GOOGLE_INDEXING_KEY_B64;
+  if (b64) {
+    try {
+      _creds = JSON.parse(Buffer.from(b64, 'base64').toString('utf8'));
+      return _creds;
+    } catch (e) {
+      console.error('[indexing] GOOGLE_INDEXING_KEY_B64 decode failed:', e.message);
+    }
+  }
+
+  const envKey = process.env.GOOGLE_INDEXING_KEY;
+  if (envKey) {
+    if (envKey.trim().startsWith('{')) {
+      try {
+        _creds = JSON.parse(envKey);
+        return _creds;
+      } catch (e) {
+        console.error('[indexing] GOOGLE_INDEXING_KEY JSON parse failed:', e.message);
+      }
+    }
+    if (fs.existsSync(envKey)) {
+      try {
+        _creds = JSON.parse(fs.readFileSync(envKey, 'utf8'));
+        return _creds;
+      } catch (e) {
+        console.error('[indexing] read GOOGLE_INDEXING_KEY file failed:', e.message);
+      }
+    }
+  }
+
+  const candidates = [
+    path.join(process.env.HOME || '', '.config/gcloud/gjam-gsc-mcp.json'),
+    path.join(__dirname, '..', 'google-indexing-key.json'),
+    path.join(__dirname, '../../../railwayengine/google-indexing-key.json'),
+  ];
+  for (const p of candidates) {
+    try {
+      if (p && fs.existsSync(p)) {
+        _creds = JSON.parse(fs.readFileSync(p, 'utf8'));
+        break;
+      }
+    } catch (e) {
+      console.error('[indexing] read key failed:', p, e.message);
+    }
+  }
+  return _creds;
+}
+
+function makeJwt(sa) {
+  return new google.auth.JWT({
+    email: sa.client_email,
+    key: sa.private_key,
+    scopes: ['https://www.googleapis.com/auth/indexing'],
+  });
+}
+
 const abs = (p) => (p.startsWith('http') ? p : `${HOST}${p === '/' ? '/' : p}`);
 
 async function hotStockPaths(limit = 60) {
@@ -74,11 +139,17 @@ async function buildList(explicit) {
 }
 
 async function submitGoogleIndexing(urls) {
-  if (!fs.existsSync(KEY)) {
-    return { ok: false, skipped: true, reason: `key not found at ${KEY}` };
+  const sa = resolveIndexingCredentials();
+  if (!sa?.client_email || !sa?.private_key) {
+    return {
+      ok: false,
+      skipped: true,
+      reason: 'no indexing credentials (set GOOGLE_INDEXING_KEY_B64 on Vercel)',
+    };
   }
+
   const list = Array.isArray(urls) && urls.length ? urls.map(abs).slice(0, CAP) : await buildList([]);
-  const jwt = new google.auth.JWT({ keyFile: KEY, scopes: ['https://www.googleapis.com/auth/indexing'] });
+  const jwt = makeJwt(sa);
   await jwt.authorize();
 
   let ok = 0;
@@ -117,4 +188,4 @@ async function main() {
 
 if (require.main === module) main().catch((e) => { console.error(e); process.exit(1); });
 
-module.exports = { submitGoogleIndexing, buildList, PRIORITY };
+module.exports = { submitGoogleIndexing, buildList, PRIORITY, resolveIndexingCredentials };
