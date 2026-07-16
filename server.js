@@ -449,6 +449,11 @@ app.get('/robots.txt', (req, res) => {
   res.type('text/plain').send(robotsTxt(req));
 });
 
+// AdMob crawler — must be plain text (never SPA HTML).
+app.get(['/app-ads.txt', '/ads.txt'], (req, res) => {
+  res.type('text/plain').sendFile(path.join(__dirname, 'public', 'app-ads.txt'));
+});
+
 // SPA fallback
 app.get('*', (req, res, next) => {
   if (req.path.startsWith('/api/')) return next();

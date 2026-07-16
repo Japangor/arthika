@@ -4,7 +4,19 @@
     { "source": "/api/:path*", "destination": "/api/index.js" },
     { "source": "/sitemap.xml", "destination": "/api/index.js" },
     { "source": "/robots.txt", "destination": "/api/index.js" },
+    { "source": "/app-ads.txt", "destination": "/app-ads.txt" },
+    { "source": "/ads.txt", "destination": "/ads.txt" },
     { "source": "/((?!.*\\.).*)", "destination": "/api/index.js" }
+  ],
+  "headers": [
+    {
+      "source": "/app-ads.txt",
+      "headers": [{ "key": "Content-Type", "value": "text/plain; charset=utf-8" }]
+    },
+    {
+      "source": "/ads.txt",
+      "headers": [{ "key": "Content-Type", "value": "text/plain; charset=utf-8" }]
+    }
   ],
   "functions": {
     "api/index.js": { "maxDuration": 30 }
