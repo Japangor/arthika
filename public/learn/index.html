@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Money, Explained — Interactive 3D Investing Book | Arthika Learn</title>
+  <meta name="description" content="An interactive 3D book that teaches investing: inflation, compounding, SIPs, how share prices form, P/E ratios, diversification and building a money plan. Move the sliders and watch the money move. Free, in your browser.">
+  <link rel="canonical" href="https://arthika.rail24.in/learn/">
+  <meta property="og:title" content="Money, Explained — an interactive 3D investing book">
+  <meta property="og:description" content="Seven hands-on lessons, from inflation to diversification. Every diagram lifts off the page.">
+  <meta name="theme-color" content="#140e09">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,700;0,9..144,800;1,9..144,500&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/learn/learn.css?v=1">
+  <script type="application/ld+json">
+  {"@context":"https://schema.org","@type":"Course","name":"Money, Explained — Volume I: Foundations of Investing",
+   "description":"Seven interactive 3D lessons on inflation, compounding, SIPs, price discovery, P/E ratios, diversification and money planning.",
+   "provider":{"@type":"Organization","name":"Arthika by GJam Technologies","url":"https://arthika.rail24.in"},
+   "isAccessibleForFree":true,"inLanguage":"en-IN"}
+  </script>
+  <script type="importmap">
+  { "imports": {
+      "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+  } }
+  </script>
+</head>
+<body>
+  <div id="stage" aria-hidden="true"></div>
+
+  <!-- Top bar: lesson pill (left) and tools (right) -->
+  <div class="hud hud-left">
+    <a class="brand" href="/" title="Back to Arthika Markets">Arthika<span>Learn</span></a>
+    <div class="pill" id="pill">
+      <button class="pill-arrow" id="prev" aria-label="Previous lesson">‹</button>
+      <button class="pill-body" id="toc-btn" aria-haspopup="true" aria-expanded="false">
+        <span class="pill-kicker" id="pill-kicker">Volume I</span>
+        <span class="pill-title" id="pill-title">Money, Explained</span>
+      </button>
+      <button class="pill-arrow" id="next" aria-label="Next lesson">›</button>
+    </div>
+    <nav class="toc" id="toc" hidden aria-label="Lessons"></nav>
+  </div>
+  <div class="hud hud-right">
+    <button class="tool" id="btn-lamp" title="Lamp on / off" aria-label="Toggle lamp"><svg viewBox="0 0 24 24"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/></svg></button>
+    <button class="tool" id="btn-view" title="Reset view" aria-label="Reset camera"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5"/></svg></button>
+    <button class="tool" id="btn-read" title="Reading mode" aria-label="Toggle reading mode"><svg viewBox="0 0 24 24"><path d="M2 5h7a3 3 0 0 1 3 3v12a2 2 0 0 0-2-2H2zM22 5h-7a3 3 0 0 0-3 3v12a2 2 0 0 1 2-2h8z"/></svg></button>
+    <button class="tool" id="btn-full" title="Full screen" aria-label="Full screen"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+  </div>
+
+  <!-- Closed-book title card -->
+  <div class="cover-ui" id="cover-ui">
+    <p class="cover-eyebrow">Arthika Learn · Interactive book</p>
+    <h1>Money, Explained</h1>
+    <p class="cover-sub">Volume I — Foundations of Investing. Seven lessons where every diagram lifts off the page: move a slider and watch the money move.</p>
+    <button class="open-btn" id="open-btn">Open the book <span>→</span></button>
+    <p class="cover-hint">Drag to look around · scroll to zoom · ← → to turn pages</p>
+  </div>
+
+  <!-- Phone / reading mode sheet (also the no-WebGL fallback) -->
+  <section class="sheet" id="sheet" hidden aria-live="polite">
+    <div class="sheet-tabs" role="tablist">
+      <button role="tab" data-tab="read" aria-selected="true">Read</button>
+      <button role="tab" data-tab="play" aria-selected="false">Play</button>
+    </div>
+    <div class="sheet-body" id="sheet-body"></div>
+  </section>
+
+  <div class="tip" id="tip" hidden></div>
+  <div class="toast" id="toast" hidden></div>
+  <p class="legal">Educational content only — not SEBI-registered investment advice. Examples are illustrative; markets carry risk.</p>
+
+  <noscript><div class="noscript">This interactive book needs JavaScript. <a href="/">Back to Arthika</a></div></noscript>
+  <script type="module" src="/learn/main.js?v=1"></script>
+</body>
+</html>

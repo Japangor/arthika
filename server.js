@@ -454,6 +454,11 @@ app.get(['/app-ads.txt', '/ads.txt'], (req, res) => {
   res.type('text/plain').sendFile(path.join(__dirname, 'public', 'app-ads.txt'));
 });
 
+// Arthika Learn: the interactive 3D book (static page, own assets under /learn/)
+app.get(['/learn', '/learn/'], (_req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'learn', 'index.html'));
+});
+
 // SPA fallback
 app.get('*', (req, res, next) => {
   if (req.path.startsWith('/api/')) return next();

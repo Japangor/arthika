@@ -1051,6 +1051,7 @@ async function buildSitemapUrlList() {
     for (const a of hub.aliases || []) urls.push(a);
   }
   urls.push('/app');
+  urls.push('/learn/');
   ['/screeners', '/sectors', '/discover'].forEach((p) => urls.push(p));
   THEMES.forEach((t) => {
     urls.push(`/${t.slug}`);
